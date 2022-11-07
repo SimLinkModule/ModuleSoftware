@@ -35,8 +35,9 @@ static void bleprhp_advertise(void){
 
     /*Begin advertising*/
     memset(&adv_params, 0, sizeof(adv_params));
-    //TODO
+    //undirected-connectable
     adv_params.conn_mode = BLE_GAP_CONN_MODE_UND;
+    //general-discoverable
     adv_params.disc_mode = BLE_GAP_DISC_MODE_GEN;
     rc = ble_gap_adv_start(bleprhp_addr_type, NULL, BLE_HS_FOREVER, &adv_params, bleprhp_gap_event, NULL);
     if (rc != 0){
@@ -62,7 +63,7 @@ static int bleprhp_gap_event(struct ble_gap_event *event, void *arg){
             bleprhp_advertise();
             break;
         case BLE_GAP_EVENT_ADV_COMPLETE:
-            //TODO
+            //means advertising has been completed because connection has been established
             ESP_LOGI(tag, "adv complete\n");
             bleprhp_advertise();
             break;

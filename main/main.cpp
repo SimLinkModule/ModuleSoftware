@@ -37,7 +37,6 @@ extern "C" void app_main(void)
     /*Security Manager Remote Key Distribution Mask*/
     ble_hs_cfg.sm_their_key_dist = 1;
 
-    //TODO
     rc = gatt_svr_init();
     assert(rc == 0);
 
