@@ -1,5 +1,7 @@
 set(srcs "main.cpp"
-         "functions.cpp")
+         "common.cpp"
+         "gap.cpp"
+         "gatt.cpp")
 
 idf_component_register(SRCS "${srcs}"
                     INCLUDE_DIRS ".")

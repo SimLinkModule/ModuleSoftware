@@ -20,6 +20,6 @@ static void bleprhp_on_sync(void){
     rc = ble_hs_id_infer_auto(0, &bleprhp_addr_type);
     assert(rc == 0);
 
-    //TODO
-    //bleprhp_advertise();
+    /*start advertising, when controller and host are in sync*/
+    bleprhp_advertise();
 }

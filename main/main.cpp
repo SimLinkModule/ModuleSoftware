@@ -7,6 +7,7 @@ extern "C" void app_main(void)
     int rc;
 
     /*Initialize NVS - it is used to store PHY calibration data*/
+    //NVS = Non-volatile storage library is designed to store key-balue pairs in flash
     //Ablauf ist in esp idf beschrieben
     //docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/bluetooth/nimble/index.html
     esp_err_t ret = nvs_flash_init();
@@ -37,7 +38,7 @@ extern "C" void app_main(void)
     ble_hs_cfg.sm_their_key_dist = 1;
 
     //TODO
-    //rc = gatt_svr_init();
+    rc = gatt_svr_init();
     assert(rc == 0);
 
     /*Set the default device name. */
