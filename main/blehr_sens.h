@@ -34,6 +34,8 @@ extern "C" {
 #define GATT_DEVICE_INFO_UUID                   0x180A
 #define GATT_MANUFACTURER_NAME_UUID             0x2A29
 #define GATT_MODEL_NUMBER_UUID                  0x2A24
+#define GATT_FIRMWARE_REVISION_UUID             0x2A26
+#define GATT_SOFTWARE_REVISION_UUID             0x2A28
 #define GATT_BATTERYS_UUID                      0x180f
 #define GATT_BATTERY_LEVEL_UUID                 0x2a19
 

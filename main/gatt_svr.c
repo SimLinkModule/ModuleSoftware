@@ -28,6 +28,8 @@
 
 static const char *manuf_name = "Apache Mynewt ESP32 devkitC";
 static const char *model_num = "Mynewt HR Sensor demo";
+static const char *firmware_rev = "2.0";
+static const char *software_rev = "4.8";
 uint16_t hrs_hrm_handle;
 
 static int
@@ -67,13 +69,23 @@ static const struct ble_gatt_svc_def gatt_svr_svcs[] = {
         .uuid = BLE_UUID16_DECLARE(GATT_DEVICE_INFO_UUID),
         .characteristics = (struct ble_gatt_chr_def[])
         { {
-                /* Characteristic: * Manufacturer name */
+                /* Characteristic: Manufacturer name */
                 .uuid = BLE_UUID16_DECLARE(GATT_MANUFACTURER_NAME_UUID),
                 .access_cb = gatt_svr_chr_access_device_info,
                 .flags = BLE_GATT_CHR_F_READ,
             }, {
                 /* Characteristic: Model number string */
                 .uuid = BLE_UUID16_DECLARE(GATT_MODEL_NUMBER_UUID),
+                .access_cb = gatt_svr_chr_access_device_info,
+                .flags = BLE_GATT_CHR_F_READ,
+            }, {
+                /* Characteristic: Firmware Revision string */
+                .uuid = BLE_UUID16_DECLARE(GATT_FIRMWARE_REVISION_UUID),
+                .access_cb = gatt_svr_chr_access_device_info,
+                .flags = BLE_GATT_CHR_F_READ,
+            }, {
+                /* Characteristic: Software Revision string */
+                .uuid = BLE_UUID16_DECLARE(GATT_SOFTWARE_REVISION_UUID),
                 .access_cb = gatt_svr_chr_access_device_info,
                 .flags = BLE_GATT_CHR_F_READ,
             }, {
@@ -140,6 +152,16 @@ gatt_svr_chr_access_device_info(uint16_t conn_handle, uint16_t attr_handle,
 
     if (uuid == GATT_MANUFACTURER_NAME_UUID) {
         rc = os_mbuf_append(ctxt->om, manuf_name, strlen(manuf_name));
+        return rc == 0 ? 0 : BLE_ATT_ERR_INSUFFICIENT_RES;
+    }
+
+    if (uuid == GATT_FIRMWARE_REVISION_UUID) {
+        rc = os_mbuf_append(ctxt->om, firmware_rev, strlen(firmware_rev));
+        return rc == 0 ? 0 : BLE_ATT_ERR_INSUFFICIENT_RES;
+    }
+
+    if (uuid == GATT_SOFTWARE_REVISION_UUID) {
+        rc = os_mbuf_append(ctxt->om, software_rev, strlen(software_rev));
         return rc == 0 ? 0 : BLE_ATT_ERR_INSUFFICIENT_RES;
     }
 
