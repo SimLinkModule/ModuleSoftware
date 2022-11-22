@@ -172,6 +172,16 @@ static const uint8_t hidInfo[HID_INFORMATION_LEN] = {
     HID_KBD_FLAGS                                     // Flags
 };
 
+static const uint8_t reportReferenceChar[2] = {
+    0x01,                                               //report-id des reports vom report deskriptor
+    0x01                                                //input: 0x01, output: 0x02, feature: 0x03
+};
+
+static const uint8_t reportData[2] = {
+    0x12,
+    0xEF
+};
+
 uint16_t hrs_hrm_handle;
 
 static int
@@ -184,6 +194,10 @@ gatt_svr_chr_access_device_info(uint16_t conn_handle, uint16_t attr_handle,
 
 static int
 gatt_svr_chr_hid(uint16_t conn_handle, uint16_t attr_handle,
+                                struct ble_gatt_access_ctxt *ctxt, void *arg);
+
+static int
+report_descriptor_callback(uint16_t conn_handle, uint16_t attr_handle,
                                 struct ble_gatt_access_ctxt *ctxt, void *arg);
 
 static const struct ble_gatt_svc_def gatt_svr_svcs[] = {
@@ -277,6 +291,22 @@ static const struct ble_gatt_svc_def gatt_svr_svcs[] = {
                 .access_cb = gatt_svr_chr_hid,
                 .flags = BLE_GATT_CHR_F_WRITE_NO_RSP,
             }, {
+                /* Characteristic: Report Input, Pro Report Collection wird ein Reportmerkmal benötigt */
+                .uuid = BLE_UUID16_DECLARE(GATT_HID_REPORT_UUID),
+                .access_cb = gatt_svr_chr_hid,
+                //.val_handle = &hrs_hrm_handle,
+                .flags = BLE_GATT_CHR_F_READ | BLE_GATT_CHR_F_NOTIFY,
+                .descriptors = (struct ble_gatt_dsc_def[]){
+                    //client configuration descriptor soll nicht manuell hinzugefügt werden, da dieser mittels dem flag notify automatisch hinzugefügt wird
+                    {
+                        .att_flags = BLE_ATT_F_READ,
+                        .access_cb = report_descriptor_callback,
+                        .uuid = BLE_UUID16_DECLARE(GATT_REPORT_REFERENCE_CHAR_UUID) //damit wird angegeben welche report id und report type abgedeckt werden
+                    }, {
+                        0, /* No more descriptors */
+                    },
+                }
+            }, {
                 0, /* No more characteristics in this service */
             },
         }
@@ -286,6 +316,24 @@ static const struct ble_gatt_svc_def gatt_svr_svcs[] = {
         0, /* No more services */
     },
 };
+
+static int report_descriptor_callback(uint16_t conn_handle, uint16_t attr_handle,
+                                struct ble_gatt_access_ctxt *ctxt, void *arg)
+{
+    uint16_t uuid;
+    int rc;
+
+    uuid = ble_uuid_u16(ctxt->chr->uuid);
+
+    if (uuid == GATT_REPORT_REFERENCE_CHAR_UUID) {
+        //report id soll ungleich 0 sein, wenn es mehr als einen reportmerkmal gibt für einen bestimmten typen
+        rc = os_mbuf_append(ctxt->om, reportReferenceChar, sizeof(reportReferenceChar)/sizeof(reportReferenceChar[0]));
+        return rc == 0 ? 0 : BLE_ATT_ERR_INSUFFICIENT_RES;
+    }
+
+    assert(0);
+    return BLE_ATT_ERR_UNLIKELY;
+}
 
 static int gatt_svr_chr_hid(uint16_t conn_handle, uint16_t attr_handle,
                                 struct ble_gatt_access_ctxt *ctxt, void *arg)
@@ -311,6 +359,12 @@ static int gatt_svr_chr_hid(uint16_t conn_handle, uint16_t attr_handle,
             //01 == hid host is exiting the suspend state
             ESP_LOGW("ASDF", "WRITE TO CONTROL POINT %d",*test);
 			return 0;
+    }
+
+    //Daten des reports übermitteln
+    if (uuid == GATT_HID_REPORT_UUID) {
+            rc = os_mbuf_append(ctxt->om, reportData, sizeof(reportData)/sizeof(reportData[0]));
+            return rc == 0 ? 0 : BLE_ATT_ERR_INSUFFICIENT_RES;
     }
 
     assert(0);

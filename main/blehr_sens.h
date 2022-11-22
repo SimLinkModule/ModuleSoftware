@@ -50,6 +50,9 @@ extern "C" {
 #define GATT_HID_CONTROL_POINT_UUID             0x2A4C
 #define GATT_HID_REPORT_UUID                    0x2A4D
 
+/*hid report configuration*/
+#define GATT_REPORT_REFERENCE_CHAR_UUID         0x2908
+
 /*hid information infos*/
 #define HID_FLAGS_REMOTE_WAKE           0x01      // RemoteWake
 #define HID_FLAGS_NORMALLY_CONNECTABLE  0x02      // NormallyConnectable
