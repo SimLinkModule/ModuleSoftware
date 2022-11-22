@@ -1,25 +1,8 @@
-/*
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
- *
- *  http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an
- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- * KIND, either express or implied.  See the License for the
- * specific language governing permissions and limitations
- * under the License.
- */
-
-
 // USE LINUX TOOL FOR HID PROFILE --> SONST FUNKTIONIERT ES NICHT
 //https://macchina.io/blog/internet-of-things/communication-with-low-energy-bluetooth-devices-on-linux/
+
+
+//TODO: ADD notify option; works only with windows
 
 #include "esp_log.h"
 #include "nvs_flash.h"
@@ -36,8 +19,7 @@
 #include "host/ble_uuid.h"
 
 static const char *tag = "NimBLE_BLE_HeartRate";
-static const ble_uuid16_t hid_service_uuid = BLE_UUID16_INIT(0x180D);
-//static const ble_uuid16_t hid_service_uuid = BLE_UUID16_INIT(0x1812);
+static const ble_uuid16_t hid_service_uuid = BLE_UUID16_INIT(0x1812);
 
 static xTimerHandle blehr_tx_timer;
 
@@ -45,14 +27,13 @@ static bool notify_state;
 
 static uint16_t conn_handle;
 
-static const char *device_name = "blehr_sensor_1.0";
+static const char *device_name = "HID Device";
 
 static int blehr_gap_event(struct ble_gap_event *event, void *arg);
 
 static uint8_t blehr_addr_type;
 
-/* Variable to simulate heart beats */
-static uint8_t heartrate = 90;
+static int tmpVol = 0;
 
 /**
  * Utility function to log an array of bytes.
@@ -145,6 +126,7 @@ blehr_advertise(void)
 static void
 blehr_tx_hrate_stop(void)
 {
+    tmpVol = 0;
     xTimerStop( blehr_tx_timer, 1000 / portTICK_PERIOD_MS );
 }
 
@@ -152,6 +134,7 @@ blehr_tx_hrate_stop(void)
 static void
 blehr_tx_hrate_reset(void)
 {
+
     int rc;
 
     if (xTimerReset(blehr_tx_timer, 1000 / portTICK_PERIOD_MS ) == pdPASS) {
@@ -168,27 +151,26 @@ blehr_tx_hrate_reset(void)
 static void
 blehr_tx_hrate(xTimerHandle ev)
 {
-    static uint8_t hrm[2];
     int rc;
     struct os_mbuf *om;
 
     if (!notify_state) {
         blehr_tx_hrate_stop();
-        heartrate = 90;
         return;
     }
 
-    hrm[0] = 0x06; /* contact of a sensor */
-    hrm[1] = heartrate; /* storing dummy data */
-
-    /* Simulation of heart beats */
-    heartrate++;
-    if (heartrate == 160) {
-        heartrate = 90;
+    /* Simulation of volume */
+    ESP_LOGW("ASDF", "%d",tmpVol);
+    if(tmpVol < 10){
+        tmpVol++;
+        reportData[0] = 0b00000001;
+    } else {
+        tmpVol--;
+        reportData[0] = 0b00000010;
     }
 
-    om = ble_hs_mbuf_from_flat(hrm, sizeof(hrm));
-    rc = ble_gattc_notify_custom(conn_handle, hrs_hrm_handle, om);
+    om = ble_hs_mbuf_from_flat(reportData, sizeof(reportData));
+    rc = ble_gattc_notify_custom(conn_handle, report_data_handle, om);
 
     assert(rc == 0);
 
@@ -225,13 +207,11 @@ blehr_gap_event(struct ble_gap_event *event, void *arg)
         break;
 
     case BLE_GAP_EVENT_SUBSCRIBE:
-        MODLOG_DFLT(INFO, "subscribe event; cur_notify=%d\n value handle; "
-                    "val_handle=%d\n",
-                    event->subscribe.cur_notify, hrs_hrm_handle);
-        if (event->subscribe.attr_handle == hrs_hrm_handle) {
+        MODLOG_DFLT(INFO, "subscribe event; cur_notify=%d\n value handle; val_handle=%d\n", event->subscribe.cur_notify, report_data_handle);
+        if (event->subscribe.attr_handle == report_data_handle) {
             notify_state = event->subscribe.cur_notify;
             blehr_tx_hrate_reset();
-        } else if (event->subscribe.attr_handle != hrs_hrm_handle) {
+        } else if (event->subscribe.attr_handle != report_data_handle) {
             notify_state = event->subscribe.cur_notify;
             blehr_tx_hrate_stop();
         }
@@ -303,7 +283,7 @@ void app_main(void)
     ble_hs_cfg.reset_cb = blehr_on_reset;
 
     /* name, period/time,  auto reload, timer ID, callback */
-    blehr_tx_timer = xTimerCreate("blehr_tx_timer", pdMS_TO_TICKS(1000), pdTRUE, (void *)0, blehr_tx_hrate);
+    blehr_tx_timer = xTimerCreate("blehr_tx_timer", pdMS_TO_TICKS(2000), pdTRUE, (void *)0, blehr_tx_hrate);
 
     rc = gatt_svr_init();
     assert(rc == 0);
