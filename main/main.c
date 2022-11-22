@@ -17,6 +17,10 @@
  * under the License.
  */
 
+
+// USE LINUX TOOL FOR HID PROFILE --> SONST FUNKTIONIERT ES NICHT
+//https://macchina.io/blog/internet-of-things/communication-with-low-energy-bluetooth-devices-on-linux/
+
 #include "esp_log.h"
 #include "nvs_flash.h"
 #include "freertos/FreeRTOSConfig.h"
@@ -33,8 +37,6 @@
 
 static const char *tag = "NimBLE_BLE_HeartRate";
 static const ble_uuid16_t hid_service_uuid = BLE_UUID16_INIT(0x180D);
-//static const ble_uuid16_t battery_service_uuid = BLE_UUID16_INIT(0x180F);
-//static const ble_uuid16_t device_information_service_uuid = BLE_UUID16_INIT(0x180A);
 //static const ble_uuid16_t hid_service_uuid = BLE_UUID16_INIT(0x1812);
 
 static xTimerHandle blehr_tx_timer;
