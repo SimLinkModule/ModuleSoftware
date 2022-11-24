@@ -19,6 +19,7 @@ extern "C" {
 #define GATT_MODEL_NUMBER_UUID                  0x2A24
 #define GATT_FIRMWARE_REVISION_UUID             0x2A26
 #define GATT_SOFTWARE_REVISION_UUID             0x2A28
+#define GATT_PNP_ID_UUID                        0x2A50
 
 /* battery configuration */
 #define GATT_BATTERYS_UUID                      0x180f
@@ -40,10 +41,11 @@ extern "C" {
 #define HID_KBD_FLAGS                   HID_FLAGS_REMOTE_WAKE
 #define HID_INFORMATION_LEN             4         // HID Information
 
+//The value handle of the relevant characteristic for notification
 extern uint16_t report_data_handle;
 
-static uint8_t reportData[2] = {
-    0x00,
+//zu verschickender report muss immer so groß sein wie auch der report groß ist sonst geht es nicht
+static uint8_t reportData[1] = {
     0x00
 };
 

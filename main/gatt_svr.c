@@ -16,27 +16,23 @@ static const uint8_t hidReportMap[] = {
     0x05, 0x0C,        // Usage Page (Consumer)
     0x09, 0x01,        // Usage (Consumer Control)
     0xA1, 0x01,        // Collection (Application)
-    0x15, 0x00,        //   Logical Minimum (0)
+    0x85, 0x01,        // Report Id (1)
+    0x05, 0x0C,        //   Usage Page (Consumer)
+    0x09, 0x86,        //   Usage (Channel)
+    0x15, 0xFF,        //   Logical Minimum (-1)
     0x25, 0x01,        //   Logical Maximum (1)
+    0x75, 0x02,        //   Report Size (2)
+    0x95, 0x01,        //   Report Count (1)
+    0x81, 0x46,        //   Input (Data,Var,Rel,No Wrap,Linear,Preferred State,Null State)
     0x09, 0xE9,        //   Usage (Volume Increment)
     0x09, 0xEA,        //   Usage (Volume Decrement)
+    0x15, 0x00,        //   Logical Minimum (0)
     0x75, 0x01,        //   Report Size (1)
     0x95, 0x02,        //   Report Count (2)
     0x81, 0x02,        //   Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
-    0x09, 0xE2,        //   Usage (Mute)
-    0x09, 0x00,        //   Usage (Unassigned)
-    0x81, 0x06,        //   Input (Data,Var,Rel,No Wrap,Linear,Preferred State,No Null Position)
-    0x09, 0x00,        //   Usage (Unassigned)
-    0x95, 0x04,        //   Report Count (4)
-    0x81, 0x02,        //   Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
-    0x26, 0xFF, 0x00,  //   Logical Maximum (255)
-    0x09, 0x00,        //   Usage (Unassigned)
-    0x75, 0x08,        //   Report Size (8)
-    0x95, 0x03,        //   Report Count (3)
-    0x81, 0x02,        //   Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
-    0x09, 0x00,        //   Usage (Unassigned)
-    0x95, 0x04,        //   Report Count (4)
-    0x91, 0x02,        //   Output (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position,Non-volatile)
+    0x95, 0x01,        //   Report Count (1)
+    0x75, 0x04,        //   Report Size (4)
+    0x81, 0x03,        //   Input (Const,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
     0xC0,              // End Collection
 };
 
@@ -47,7 +43,7 @@ static const uint8_t hidInfo[HID_INFORMATION_LEN] = {
 };
 
 static const uint8_t reportReferenceChar[2] = {
-    0x00,                                               //report-id des reports vom report deskriptor
+    0x01,                                               //report-id des reports vom report deskriptor
     0x01                                                //input: 0x01, output: 0x02, feature: 0x03
 };
 
@@ -145,7 +141,8 @@ static const struct ble_gatt_svc_def gatt_svr_svcs[] = {
                 .flags = BLE_GATT_CHR_F_READ | BLE_GATT_CHR_F_NOTIFY,
                 .descriptors = (struct ble_gatt_dsc_def[]){
                     //client configuration descriptor soll nicht manuell hinzugefügt werden, da dieser mittels dem flag notify automatisch hinzugefügt wird
-                    {
+                    {   
+                        //TODO: | BLE_ATT_F_WRITE_ENC vielleicht bei ios benötigt
                         .att_flags = BLE_ATT_F_READ,
                         .access_cb = report_descriptor_callback,
                         .uuid = BLE_UUID16_DECLARE(GATT_REPORT_REFERENCE_CHAR_UUID) //damit wird angegeben welche report id und report type abgedeckt werden
@@ -264,13 +261,13 @@ gatt_svr_register_cb(struct ble_gatt_register_ctxt *ctxt, void *arg)
 
     switch (ctxt->op) {
     case BLE_GATT_REGISTER_OP_SVC:
-        MODLOG_DFLT(DEBUG, "registered service %s with handle=%d\n",
+        ESP_LOGI("ASDF", "registered service %s with handle=%d\n",
                     ble_uuid_to_str(ctxt->svc.svc_def->uuid, buf),
                     ctxt->svc.handle);
         break;
 
     case BLE_GATT_REGISTER_OP_CHR:
-        MODLOG_DFLT(DEBUG, "registering characteristic %s with "
+        ESP_LOGI("ASDF", "registering characteristic %s with "
                     "def_handle=%d val_handle=%d\n",
                     ble_uuid_to_str(ctxt->chr.chr_def->uuid, buf),
                     ctxt->chr.def_handle,
@@ -278,7 +275,7 @@ gatt_svr_register_cb(struct ble_gatt_register_ctxt *ctxt, void *arg)
         break;
 
     case BLE_GATT_REGISTER_OP_DSC:
-        MODLOG_DFLT(DEBUG, "registering descriptor %s with handle=%d\n",
+        ESP_LOGI("ASDF", "registering descriptor %s with handle=%d\n",
                     ble_uuid_to_str(ctxt->dsc.dsc_def->uuid, buf),
                     ctxt->dsc.handle);
         break;
