@@ -142,8 +142,7 @@ static const struct ble_gatt_svc_def gatt_svr_svcs[] = {
                 .descriptors = (struct ble_gatt_dsc_def[]){
                     //client configuration descriptor soll nicht manuell hinzugefügt werden, da dieser mittels dem flag notify automatisch hinzugefügt wird
                     {   
-                        //TODO: | BLE_ATT_F_WRITE_ENC vielleicht bei ios benötigt
-                        .att_flags = BLE_ATT_F_READ,
+                        .att_flags = BLE_ATT_F_READ | BLE_ATT_F_READ_ENC,
                         .access_cb = report_descriptor_callback,
                         .uuid = BLE_UUID16_DECLARE(GATT_REPORT_REFERENCE_CHAR_UUID) //damit wird angegeben welche report id und report type abgedeckt werden
                     }, {

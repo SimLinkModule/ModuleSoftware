@@ -1,0 +1,3 @@
+Linux reicht es wenn irgendwie viel bytes im report sind, welches zum gerät geschickt wird.
+Windows und Android muss die report größe mit der größe des report deskriptors übereinstimmen.
+IOS benötigt eine sichere Verbindung und dann noch die erlaubnis auf das report zuzugreifen wenn es eine sichere verbindung ist. Zusätzlich darf während dem aufbau einer sicheren verbindung keine connection updates durchgeführt werden.

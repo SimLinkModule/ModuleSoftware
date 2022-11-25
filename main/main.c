@@ -2,11 +2,13 @@
 //https://macchina.io/blog/internet-of-things/communication-with-low-energy-bluetooth-devices-on-linux/
 
 
-//TODO: alle geräte funktionieren außer ios; hier reinschauen wie notify gemacht wird; muss wahrscheinlich secure verbindung sein
-//https://github.com/Xi-MingYu/Central/tree/394ccfb02f2c58d8ea7eb0e72b0abe927602f5ea/lib/NimBLE/src
-//vielleicht eine secure verbindung aufbauen https://github.com/h2zero/NimBLE-Arduino/issues/222
-//https://github.com/wakwak-koba/ESP32-NimBLE-Keyboard/blob/ec4ce707f00d260f30286191fe63dc23d65a5934/BleKeyboard.cpp#L141
-// Diese verschlüsselung mal hinzufügen
+//TODO: Update connection parameter wieder hinzufügen (bleprh anschauen)
+//TODO: Schauen warum unter ios sich bei erneuter verbindung das gerät nicht verbinden kann
+//TODO: Bei einem erneuten verbindungsaufbau wird das gestoppte updaten der daten nicht wieder gestartet
+//TODO: vielleicht mal schauen ob a Resolvable Private Address schwierig sind hinzuzufügen statt publich adressen (bleprh anschauen)
+//Update connection parameters are not allowed during iPhone HID encryption, slave turns off the ability to automatically update connection parameters during encryption.
+
+//https://github.com/espressif/esp-idf/issues/3532
 
 #include "esp_log.h"
 #include "nvs_flash.h"
@@ -21,6 +23,7 @@
 #include "services/gap/ble_svc_gap.h"
 #include "blehr_sens.h"
 #include "host/ble_uuid.h"
+#include "esp_peripheral.h"
 
 static const char *tag = "NimBLE_BLE_HeartRate";
 static const ble_uuid16_t hid_service_uuid = BLE_UUID16_INIT(0x1812);
@@ -183,6 +186,9 @@ blehr_tx_hrate(xTimerHandle ev)
 static int
 blehr_gap_event(struct ble_gap_event *event, void *arg)
 {
+    struct ble_gap_conn_desc desc;
+    int rc;
+
     switch (event->type) {
     case BLE_GAP_EVENT_CONNECT:
         /* A new connection was established or a connection attempt failed */
@@ -205,13 +211,15 @@ blehr_gap_event(struct ble_gap_event *event, void *arg)
             .supervision_timeout = 1860/10 //10ms units, laut apple größer als itvl_max * (latency + 1) * 3
         };
 
-        ESP_ERROR_CHECK(ble_gap_update_params(event->connect.conn_handle, &connectionParameters));
+        //ESP_ERROR_CHECK(ble_gap_update_params(event->connect.conn_handle, &connectionParameters));
 
         conn_handle = event->connect.conn_handle;
+        ble_gap_security_initiate(conn_handle);
         break;
 
     case BLE_GAP_EVENT_DISCONNECT:
         ESP_LOGI("ASDF", "disconnect; reason=%d\n", event->disconnect.reason);
+        //531 = Remote User Terminated Connection
 
         /* Connection terminated; resume advertising */
         blehr_advertise();
@@ -239,7 +247,73 @@ blehr_gap_event(struct ble_gap_event *event, void *arg)
                     event->mtu.conn_handle,
                     event->mtu.value);
         break;
+    case BLE_GAP_EVENT_ENC_CHANGE:
+        ESP_LOGI("ASDF", "encryption change event; status=%d ",
+                    event->enc_change.status);
+        break;
+    case BLE_GAP_EVENT_REPEAT_PAIRING:
+        /* We already have a bond with the peer, but it is attempting to
+         * establish a new secure link.  This app sacrifices security for
+         * convenience: just throw away the old bond and accept the new link.
+         */
+        ESP_LOGI("ASDF", "establisch new secure link");
 
+        /* Delete the old bond. */
+        rc = ble_gap_conn_find(event->repeat_pairing.conn_handle, &desc);
+        assert(rc == 0);
+        ble_store_util_delete_peer(&desc.peer_id_addr);
+
+        /* Return BLE_GAP_REPEAT_PAIRING_RETRY to indicate that the host should
+         * continue with the pairing operation.
+         */
+        return BLE_GAP_REPEAT_PAIRING_RETRY;
+        break;
+
+    case BLE_GAP_EVENT_PASSKEY_ACTION:
+        ESP_LOGI("ASDF", "PASSKEY_ACTION_EVENT started \n");
+        
+        struct ble_sm_io pkey = {0};
+        int key = 0;
+
+        if (event->passkey.params.action == BLE_SM_IOACT_DISP) {
+            pkey.action = event->passkey.params.action;
+            pkey.passkey = 123456; // This is the passkey to be entered on peer
+            ESP_LOGI(tag, "Enter passkey %d on the peer side", pkey.passkey);
+            rc = ble_sm_inject_io(event->passkey.conn_handle, &pkey);
+            ESP_LOGI(tag, "ble_sm_inject_io result: %d\n", rc);
+        } else if (event->passkey.params.action == BLE_SM_IOACT_NUMCMP) {
+            ESP_LOGI(tag, "Passkey on device's display: %d", event->passkey.params.numcmp);
+            ESP_LOGI(tag, "Accept or reject the passkey through console in this format -> key Y or key N");
+            pkey.action = event->passkey.params.action;
+            if (scli_receive_key(&key)) {
+                pkey.numcmp_accept = key;
+            } else {
+                pkey.numcmp_accept = 0;
+                ESP_LOGE(tag, "Timeout! Rejecting the key");
+            }
+            rc = ble_sm_inject_io(event->passkey.conn_handle, &pkey);
+            ESP_LOGI(tag, "ble_sm_inject_io result: %d\n", rc);
+        } else if (event->passkey.params.action == BLE_SM_IOACT_OOB) {
+            static uint8_t tem_oob[16] = {0};
+            pkey.action = event->passkey.params.action;
+            for (int i = 0; i < 16; i++) {
+                pkey.oob[i] = tem_oob[i];
+            }
+            rc = ble_sm_inject_io(event->passkey.conn_handle, &pkey);
+            ESP_LOGI(tag, "ble_sm_inject_io result: %d\n", rc);
+        } else if (event->passkey.params.action == BLE_SM_IOACT_INPUT) {
+            ESP_LOGI(tag, "Enter the passkey through console in this format-> key 123456");
+            pkey.action = event->passkey.params.action;
+            if (scli_receive_key(&key)) {
+                pkey.passkey = key;
+            } else {
+                pkey.passkey = 0;
+                ESP_LOGE(tag, "Timeout! Passing 0 as the key");
+            }
+            rc = ble_sm_inject_io(event->passkey.conn_handle, &pkey);
+            ESP_LOGI(tag, "ble_sm_inject_io result: %d\n", rc);
+        }
+        return 0;
     }
 
     return 0;
@@ -297,6 +371,10 @@ void app_main(void)
     /* Initialize the NimBLE host configuration */
     ble_hs_cfg.sync_cb = blehr_on_sync;
     ble_hs_cfg.reset_cb = blehr_on_reset;
+    ble_hs_cfg.gatts_register_cb = gatt_svr_register_cb;
+    ble_hs_cfg.sm_io_cap = BLE_SM_IO_CAP_NO_IO;
+    ble_hs_cfg.sm_sc = 1;
+    ble_hs_cfg.sm_mitm = 1;
 
     /* name, period/time,  auto reload, timer ID, callback */
     blehr_tx_timer = xTimerCreate("blehr_tx_timer", pdMS_TO_TICKS(2000), pdTRUE, (void *)0, blehr_tx_hrate);
