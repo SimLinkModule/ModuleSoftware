@@ -1,14 +1,5 @@
-// USE LINUX TOOL FOR HID PROFILE --> SONST FUNKTIONIERT ES NICHT
-//https://macchina.io/blog/internet-of-things/communication-with-low-energy-bluetooth-devices-on-linux/
 
 
-//TODO: Update connection parameter wieder hinzufügen (bleprh anschauen)
-//TODO: Schauen warum unter ios sich bei erneuter verbindung das gerät nicht verbinden kann
-//TODO: Bei einem erneuten verbindungsaufbau wird das gestoppte updaten der daten nicht wieder gestartet
-//TODO: vielleicht mal schauen ob a Resolvable Private Address schwierig sind hinzuzufügen statt publich adressen (bleprh anschauen)
-//Update connection parameters are not allowed during iPhone HID encryption, slave turns off the ability to automatically update connection parameters during encryption.
-
-//https://github.com/espressif/esp-idf/issues/3532
 
 #include "esp_log.h"
 #include "nvs_flash.h"
