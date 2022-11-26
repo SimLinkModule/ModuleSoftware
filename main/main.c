@@ -207,22 +207,20 @@ blehr_gap_event(struct ble_gap_event *event, void *arg)
         if (event->connect.status != 0) {
             /* Connection failed; resume advertising */
             blehr_advertise();
+        } else {
+            struct ble_gap_upd_params connectionParameters = {
+                //itvl: These determine how often the devices will "ping-pong" each other and also when they will send any data required. So if you set the value to something like 20, that would mean packets are sent every 25ms, which will obviously consume more power than say a value of 80 (100ms). The reason for the min max values is so the devices can negotiate a compromise for the best possible communication, you can set these to the same value if you prefer.
+                .itvl_min = (int)(11.25/1.25), //1.25ms units; laut apple 11.25 minimum fuer hid
+                .itvl_max = (int)(20/1.25),    //minimum ist laut apple eigentlich 15ms deswegen etwas höher setzen
+                //latency: This is how many "ping-pong" (connection interval) events the slave(server) device is allowed to skip without the client device considering the connection terminated. So if you had a 25ms connection interval and you wanted to sleep for 1 second you could set this value to 40 and the client would consider the connection active for up to 40 skipped intervals.
+                .latency = 30,            //up to 30 connection intervals
+                //timeout: This is the absolute (disconnection) timeout, if no packets are received by either device within this time the connection is considered terminated.
+                .supervision_timeout = 1860/10 //10ms units, laut apple größer als itvl_max * (latency + 1) * 3
+            };
+
+            //ESP_ERROR_CHECK(ble_gap_update_params(event->connect.conn_handle, &connectionParameters));
         }
 
-        struct ble_gap_upd_params connectionParameters = {
-            //itvl: These determine how often the devices will "ping-pong" each other and also when they will send any data required. So if you set the value to something like 20, that would mean packets are sent every 25ms, which will obviously consume more power than say a value of 80 (100ms). The reason for the min max values is so the devices can negotiate a compromise for the best possible communication, you can set these to the same value if you prefer.
-            .itvl_min = (int)(11.25/1.25), //1.25ms units; laut apple 11.25 minimum fuer hid
-            .itvl_max = (int)(20/1.25),    //minimum ist laut apple eigentlich 15ms deswegen etwas höher setzen
-            //latency: This is how many "ping-pong" (connection interval) events the slave(server) device is allowed to skip without the client device considering the connection terminated. So if you had a 25ms connection interval and you wanted to sleep for 1 second you could set this value to 40 and the client would consider the connection active for up to 40 skipped intervals.
-            .latency = 30,            //up to 30 connection intervals
-            //timeout: This is the absolute (disconnection) timeout, if no packets are received by either device within this time the connection is considered terminated.
-            .supervision_timeout = 1860/10 //10ms units, laut apple größer als itvl_max * (latency + 1) * 3
-        };
-
-        //ESP_ERROR_CHECK(ble_gap_update_params(event->connect.conn_handle, &connectionParameters));
-
-        conn_handle = event->connect.conn_handle;
-        ble_gap_security_initiate(conn_handle);
         break;
 
     case BLE_GAP_EVENT_DISCONNECT:
@@ -240,6 +238,17 @@ blehr_gap_event(struct ble_gap_event *event, void *arg)
 
     case BLE_GAP_EVENT_SUBSCRIBE:
         ESP_LOGI("ASDF", "subscribe event; cur_notify=%d\n value handle; val_handle=%d\n", event->subscribe.cur_notify, report_data_handle);
+        
+        rc = ble_gap_conn_find(event->subscribe.conn_handle, &desc);
+        if (rc != 0) {
+            break;
+        }
+
+        //muss eigentlich nur gemacht werden bei den attr_handle wo es auf encrypted nur gelesen wird --> input report
+        if(!desc.sec_state.encrypted) {
+            ble_gap_security_initiate(event->subscribe.conn_handle);
+        }
+
         if (event->subscribe.attr_handle == report_data_handle) {
             notify_state = event->subscribe.cur_notify;
             blehr_tx_hrate_reset();
@@ -345,10 +354,10 @@ blehr_on_sync(void)
     ble_hs_pvcy_rpa_config(1);
 
     /* Make sure we have proper identity address set (public preferred) */
-    //rc = ble_hs_util_ensure_addr(1);
+    rc = ble_hs_util_ensure_addr(0);
 
 
-    rc = ble_hs_id_infer_auto(0, &blehr_addr_type);
+    rc = ble_hs_id_infer_auto(blehr_addr_type, &blehr_addr_type);
     assert(rc == 0);
 
     uint8_t addr_val[6] = {0};
@@ -357,6 +366,8 @@ blehr_on_sync(void)
     ESP_LOGI("ASDF", "Device Address: ");
     print_addr(addr_val);
     ESP_LOGI("ASDF", "\n");
+
+    taskYIELD();
 
     /* Begin advertising */
     blehr_advertise();
@@ -415,8 +426,10 @@ void app_main(void)
     //BLE_SM_IO_CAP_NO_IO = just work
     //BLE_SM_IO_CAP_KEYBOARD_DISP = Keyboard and display
     ble_hs_cfg.sm_io_cap = BLE_SM_IO_CAP_NO_IO;
+    //perform secure connection pairing, false we will use legacy pairing.
     ble_hs_cfg.sm_sc = 1;
     ble_hs_cfg.sm_bonding = 1;
+    //man in the middle protection
     ble_hs_cfg.sm_mitm = 1;
     ble_hs_cfg.sm_our_key_dist = BLE_SM_PAIR_KEY_DIST_ENC | BLE_SM_PAIR_KEY_DIST_ID;
     /* Refer components/nimble/nimble/nimble/host/include/host/ble_sm.h for
