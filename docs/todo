@@ -1,7 +1,8 @@
 - Update connection parameter wieder hinzufügen (bleprh anschauen)
-- Schauen warum unter ios sich bei erneuter verbindung das gerät nicht verbinden kann
 - Bei einem erneuten verbindungsaufbau wird das gestoppte updaten der daten nicht wieder gestartet
-- vielleicht mal schauen ob a Resolvable Private Address schwierig sind hinzuzufügen statt publich adressen (bleprh anschauen)
+- IOS kann den bond nicht wiederherstellen, wenn ESP neugestartet wird (muss neu hinzugefügt werden)
+    - Android kann schon beim enkoppeln und erneuten koppeln nicht mehr bonden ohne nachfrage
+    - Linux geht immer
 - Code cleanup
 - Kommentare von main nehmen und in diesen branch hinzufügen
     - Mergen in main

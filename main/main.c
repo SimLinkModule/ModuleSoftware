@@ -15,6 +15,7 @@
 #include "blehr_sens.h"
 #include "host/ble_uuid.h"
 #include "esp_peripheral.h"
+#include "host/ble_hs_pvcy.h"
 
 static const char *tag = "NimBLE_BLE_HeartRate";
 static const ble_uuid16_t hid_service_uuid = BLE_UUID16_INIT(0x1812);
@@ -29,9 +30,25 @@ static const char *device_name = "HID Device";
 
 static int blehr_gap_event(struct ble_gap_event *event, void *arg);
 
-static uint8_t blehr_addr_type;
+static uint8_t blehr_addr_type = BLE_ADDR_RANDOM;
 
 static bool volumeUp = true;
+
+static void
+ble_app_set_addr(void)
+{
+    ble_addr_t addr;
+    int rc;
+
+    /* generate new non-resolvable private address */
+    rc = ble_hs_id_gen_rnd(0, &addr);
+    assert(rc == 0);
+
+    /* set generated address */
+    rc = ble_hs_id_set_rnd(addr.val);
+
+    assert(rc == 0);
+}
 
 /**
  * Utility function to log an array of bytes.
@@ -305,6 +322,13 @@ blehr_gap_event(struct ble_gap_event *event, void *arg)
             ESP_LOGI(tag, "ble_sm_inject_io result: %d\n", rc);
         }
         return 0;
+    case BLE_GAP_EVENT_NOTIFY_TX:
+        //Represents a transmitted ATT notification or indication, or a
+        //completed indication transaction.
+        ESP_LOGI("asdf", "notify tx event occured");
+        return 0;
+    default:
+        ESP_LOGI("ASDF", "GAP EVENT ID: %d\n",event->type);
     }
 
     return 0;
@@ -314,6 +338,15 @@ static void
 blehr_on_sync(void)
 {
     int rc;
+
+    /* Generate a non-resolvable private address. */
+    //ble_app_set_addr();
+
+    ble_hs_pvcy_rpa_config(1);
+
+    /* Make sure we have proper identity address set (public preferred) */
+    //rc = ble_hs_util_ensure_addr(1);
+
 
     rc = ble_hs_id_infer_auto(0, &blehr_addr_type);
     assert(rc == 0);
@@ -362,10 +395,33 @@ void app_main(void)
     /* Initialize the NimBLE host configuration */
     ble_hs_cfg.sync_cb = blehr_on_sync;
     ble_hs_cfg.reset_cb = blehr_on_reset;
+    /**
+     * Round-robin status callback.  If a there is insufficient storage capacity
+     * for a new record, delete the oldest bond and proceed with the persist
+     * operation.
+     *
+     * Note: This is not the best behavior for an actual product because
+     * uninteresting peers could cause important bonds to be deleted.  This is
+     * useful for demonstrations and sample apps.
+     */
+    ble_hs_cfg.store_status_cb = ble_store_util_status_rr;
+    //optional wird ausgeführt wenn ein gatt resource (characteristic, descriptor, sevice) hinzugefügt wird. Also nicht benötigt
     ble_hs_cfg.gatts_register_cb = gatt_svr_register_cb;
+
+    //io types zum aufbau einer sicheren verbindung
+    //BLE_SM_IO_CAP_DISP_ONLY = Display only
+    //BLE_SM_IO_CAP_DISP_YES_NO = Display & yes & no buttons
+    //BLE_SM_IO_CAP_KEYBOARD_ONLY = Keyboard only
+    //BLE_SM_IO_CAP_NO_IO = just work
+    //BLE_SM_IO_CAP_KEYBOARD_DISP = Keyboard and display
     ble_hs_cfg.sm_io_cap = BLE_SM_IO_CAP_NO_IO;
     ble_hs_cfg.sm_sc = 1;
+    ble_hs_cfg.sm_bonding = 1;
     ble_hs_cfg.sm_mitm = 1;
+    ble_hs_cfg.sm_our_key_dist = BLE_SM_PAIR_KEY_DIST_ENC | BLE_SM_PAIR_KEY_DIST_ID;
+    /* Refer components/nimble/nimble/nimble/host/include/host/ble_sm.h for
+     * more information */
+    ble_hs_cfg.sm_their_key_dist = BLE_SM_PAIR_KEY_DIST_ENC | BLE_SM_PAIR_KEY_DIST_ID;
 
     /* name, period/time,  auto reload, timer ID, callback */
     blehr_tx_timer = xTimerCreate("blehr_tx_timer", pdMS_TO_TICKS(2000), pdTRUE, (void *)0, blehr_tx_hrate);

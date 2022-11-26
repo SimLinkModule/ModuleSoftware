@@ -200,7 +200,10 @@ static int gatt_svr_chr_hid(uint16_t conn_handle, uint16_t attr_handle,
             int *test = OS_MBUF_DATA(ctxt->om,int *);
             //00 == hid host is entering the suspend state
             //01 == hid host is exiting the suspend state
-            ESP_LOGW("ASDF", "WRITE TO CONTROL POINT %d",*test);
+            //nur das erste bit betrachten
+            //unter ios wird der suspend state schon geändert wenn man das gerät nur umdreht und das display noch nicht eingeschalten hat :)
+            int wakeupInfo = *test & 0b01;
+            ESP_LOGW("ASDF", "WRITE TO CONTROL POINT %d",wakeupInfo);
 			return 0;
     }
 
