@@ -202,7 +202,7 @@ static int gatt_svr_chr_hid(uint16_t conn_handle, uint16_t attr_handle,
             //01 == hid host is exiting the suspend state
             //nur das erste bit betrachten
             //unter ios wird der suspend state schon geändert wenn man das gerät nur umdreht und das display noch nicht eingeschalten hat :)
-            int wakeupInfo = *test & 0b01;
+            int wakeupInfo = *test & 0b11;
             ESP_LOGW("ASDF", "WRITE TO CONTROL POINT %d",wakeupInfo);
 			return 0;
     }
