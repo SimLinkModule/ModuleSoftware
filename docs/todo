@@ -1,0 +1,11 @@
+- Update connection parameter wieder hinzufügen (bleprh anschauen)
+    - Update connection parameters are not allowed during iPhone HID encryption, slave turns off the ability to automatically update connection parameters during encryption.
+- Bei einem erneuten verbindungsaufbau wird das gestoppte updaten der daten nicht wieder gestartet
+
+- Code cleanup
+
+
+Kann ich nicht ändern --> wie https://github.com/h2zero/NimBLE-Arduino/blob/release/1.4/src/NimBLEDevice.cpp alles gemacht:
+- IOS kann den bond nicht wiederherstellen, wenn ESP neugestartet wird (muss neu hinzugefügt werden)
+    - Android kann schon beim enkoppeln und erneuten koppeln nicht mehr bonden ohne nachfrage
+    - Linux geht immer

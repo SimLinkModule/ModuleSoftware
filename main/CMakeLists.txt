@@ -1,9 +1,2 @@
-set(srcs "main.cpp"
-         "common.cpp"
-         "gap.cpp"
-         "gatt.cpp")
-
-idf_component_register(SRCS "${srcs}"
+idf_component_register(SRCS "main.c" "gatt_svr.c"
                     INCLUDE_DIRS ".")
-
-#hier muss kein required oder ähnliches rein, weil main alles required

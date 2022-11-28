@@ -3,6 +3,12 @@
     "idf.port": "/dev/ttyUSB0",
     "idf.flashType": "UART",
     "files.associations": {
-        "regex": "cpp"
+        "regex": "cpp",
+        "random": "c",
+        "array": "c",
+        "string": "c",
+        "string_view": "c",
+        "ble_svc_gap.h": "c",
+        "console.h": "c"
     }
 }
