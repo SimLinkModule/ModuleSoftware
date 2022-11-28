@@ -1,7 +1,3 @@
-github.com/apache/mynewt-nimble/blob/master/apps/bleprph/src/main.c
-github.com/apache/mynewt-nimble/blob/master/apps/blehr/src/main.c
-github.com/espressif/esp-idf/blob/master/examples/bluetooth/nimble/blehr/main/main.c
-github.com/espressif/esp-idf/blob/master/examples/bluetooth/nimble/bleprph/main/main.c
 mynewt.apache.org/latest/network/ble_hs/ble_att.html
 docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/bluetooth/nimble.index.html
 https://iotespresso.com/esp32-nimble-how-to-send-notifications/

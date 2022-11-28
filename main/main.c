@@ -17,13 +17,14 @@
 #include "esp_peripheral.h"
 #include "host/ble_hs_pvcy.h"
 
-static const char *tag = "NimBLE_BLE_HeartRate";
+static const char *tag = "SimLinkModule_BLE";
 static const ble_uuid16_t hid_service_uuid = BLE_UUID16_INIT(0x1812);
 
 static xTimerHandle blehr_tx_timer;
 
 static bool notify_state;
 
+//eindeutiges handle was bei einem verbindungsaufbau einer verbindung zugeordnet wird
 static uint16_t conn_handle;
 
 static const char *device_name = "HID Device";
@@ -191,6 +192,7 @@ blehr_tx_hrate(xTimerHandle ev)
     blehr_tx_hrate_reset();
 }
 
+//The callback to associate with this advertising procedure. If advertising ends, the event is reported through this callback. If advertising results in a connection, the connection inherits this callback as its event-reporting mechanism.
 static int
 blehr_gap_event(struct ble_gap_event *event, void *arg)
 {
@@ -343,6 +345,7 @@ blehr_gap_event(struct ble_gap_event *event, void *arg)
     return 0;
 }
 
+//This callback is executed when the host and controller become synced. This happens at startup and after a reset
 static void
 blehr_on_sync(void)
 {
@@ -357,6 +360,7 @@ blehr_on_sync(void)
     rc = ble_hs_util_ensure_addr(0);
 
 
+    /*use privacy*/
     rc = ble_hs_id_infer_auto(blehr_addr_type, &blehr_addr_type);
     assert(rc == 0);
 
@@ -369,16 +373,18 @@ blehr_on_sync(void)
 
     taskYIELD();
 
-    /* Begin advertising */
+    /*start advertising, when controller and host are in sync*/
     blehr_advertise();
 }
 
+//This callback is executed when the host resets itself and the controller
 static void
 blehr_on_reset(int reason)
 {
     ESP_LOGI("ASDF", "Resetting state; reason=%d\n", reason);
 }
 
+//start nimble in a task
 void blehr_host_task(void *param)
 {
     ESP_LOGI(tag, "BLE Host Task Started");
@@ -390,9 +396,14 @@ void blehr_host_task(void *param)
 
 void app_main(void)
 {
+    //returncodes von nimble functionen zwischenspeichern --> geben viele informationen über den status der funktionen
+    //mynewt.apache.org/latest/network/ble_hs/ble_hs_return_codes.html
     int rc;
 
     /* Initialize NVS — it is used to store PHY calibration data */
+    //NVS = Non-volatile storage library is designed to store key-balue pairs in flash
+    //Ablauf ist in esp idf beschrieben
+    //docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/bluetooth/nimble/index.html
     esp_err_t ret = nvs_flash_init();
     if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
         ESP_ERROR_CHECK(nvs_flash_erase());
@@ -419,6 +430,7 @@ void app_main(void)
     //optional wird ausgeführt wenn ein gatt resource (characteristic, descriptor, sevice) hinzugefügt wird. Also nicht benötigt
     ble_hs_cfg.gatts_register_cb = gatt_svr_register_cb;
 
+    /*Security Manager local input output capabilities*/
     //io types zum aufbau einer sicheren verbindung
     //BLE_SM_IO_CAP_DISP_ONLY = Display only
     //BLE_SM_IO_CAP_DISP_YES_NO = Display & yes & no buttons
@@ -426,14 +438,20 @@ void app_main(void)
     //BLE_SM_IO_CAP_NO_IO = just work
     //BLE_SM_IO_CAP_KEYBOARD_DISP = Keyboard and display
     ble_hs_cfg.sm_io_cap = BLE_SM_IO_CAP_NO_IO;
-    //perform secure connection pairing, false we will use legacy pairing.
+    /*Security Manager secure connections flag
+    if set proper flag in pairing request/response will be set. this results in using LE Secure Connections for pairing if also supported by remote device. Fallback to legacy pairing if not supported by remote.*/
     ble_hs_cfg.sm_sc = 1;
+    /*security Manager bond flag
+    if set proper flag in Pairing request/response will be set. This results in storing keys distributed during bonding.*/
     ble_hs_cfg.sm_bonding = 1;
-    //man in the middle protection
+    /*security manager mitm flag
+    if set proper flag in pairing request/response will be set. This results in requiring man-in-the-middle protection when pairing.*/
     ble_hs_cfg.sm_mitm = 1;
+    /*Security Manager Local Key Distribution Mask*/
     ble_hs_cfg.sm_our_key_dist = BLE_SM_PAIR_KEY_DIST_ENC | BLE_SM_PAIR_KEY_DIST_ID;
     /* Refer components/nimble/nimble/nimble/host/include/host/ble_sm.h for
      * more information */
+    /*Security Manager Remote Key Distribution Mask*/
     ble_hs_cfg.sm_their_key_dist = BLE_SM_PAIR_KEY_DIST_ENC | BLE_SM_PAIR_KEY_DIST_ID;
 
     /* name, period/time,  auto reload, timer ID, callback */
@@ -443,7 +461,7 @@ void app_main(void)
     assert(rc == 0);
 
     /* Set the default device name */
-    rc = ble_svc_gap_device_name_set(device_name);
+    rc = ble_svc_gap_device_name_set(CONFIG_BT_NIMBLE_SVC_GAP_DEVICE_NAME);
     assert(rc == 0);
 
     /* Start the task */

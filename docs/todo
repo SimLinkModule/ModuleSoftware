@@ -3,11 +3,6 @@
 - Bei einem erneuten verbindungsaufbau wird das gestoppte updaten der daten nicht wieder gestartet
 
 - Code cleanup
-- Kommentare von main nehmen und in diesen branch hinzufügen
-    - Mergen in main
-
-
-
 
 
 Kann ich nicht ändern --> wie https://github.com/h2zero/NimBLE-Arduino/blob/release/1.4/src/NimBLEDevice.cpp alles gemacht:
