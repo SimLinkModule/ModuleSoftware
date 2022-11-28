@@ -110,8 +110,8 @@ blehr_advertise(void)
     fields.tx_pwr_lvl_is_present = 1;
     fields.tx_pwr_lvl = BLE_HS_ADV_TX_PWR_LVL_AUTO;
 
-    fields.name = (uint8_t *)device_name;
-    fields.name_len = strlen(device_name);
+    fields.name = (uint8_t *)CONFIG_BT_NIMBLE_SVC_GAP_DEVICE_NAME;
+    fields.name_len = strlen(CONFIG_BT_NIMBLE_SVC_GAP_DEVICE_NAME);
     fields.name_is_complete = 1;
 
     fields.num_uuids16 = 1;
@@ -129,7 +129,9 @@ blehr_advertise(void)
 
     /* Begin advertising */
     memset(&adv_params, 0, sizeof(adv_params));
+    //undirected-connectable
     adv_params.conn_mode = BLE_GAP_CONN_MODE_UND;
+    //general-discoverable
     adv_params.disc_mode = BLE_GAP_DISC_MODE_GEN;
     rc = ble_gap_adv_start(blehr_addr_type, NULL, BLE_HS_FOREVER,
                            &adv_params, blehr_gap_event, NULL);
