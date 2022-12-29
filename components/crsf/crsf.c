@@ -1,10 +1,4 @@
-#include <stdio.h>
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-#include "driver/uart.h"
-#include "driver/gpio.h"
-#include "esp_log.h"
-#include "hal/uart_hal.h"
+#include "crsf.h"
 
 uint8_t crcSingleChar(uint8_t crc, uint8_t a)
 {
@@ -26,8 +20,7 @@ uint8_t crcMessage(uint8_t message[], uint8_t length)
     return crc;
 }
 
-static void echo_task(void *arg)
-{
+void initCRSF_read(){
     /* Configure parameters of an UART driver,
      * communication pins and install the driver */
     //uart driver erstellt eigene interrupts
@@ -55,12 +48,12 @@ static void echo_task(void *arg)
     //diese interrupt schwellwellen speichern
     ESP_ERROR_CHECK(uart_intr_config(UART_NUM_2, &uart_intr));
     ESP_ERROR_CHECK(uart_enable_rx_intr(UART_NUM_2));
+}
 
+void crsf_get_ChannelData_task(void *arg)
+{
     // Configure a temporary buffer for the incoming data
     uint8_t *data = (uint8_t *) malloc(1024);
-
-    //store channel data in array
-    uint16_t channelData[16] = {0};
 
     while (1) {
         // get size in uart buffer
@@ -73,7 +66,7 @@ static void echo_task(void *arg)
             //read uart data
             int len = uart_read_bytes(UART_NUM_2, data, length, 20 / portTICK_RATE_MS);
 
-            //RX Buffer leeren wenn Frame gelesen wurde
+            //RX Buffer leeren wenn Frame im temporären buffer
             uart_flush(UART_NUM_2);
 
             //len of data read from rx buffer
@@ -129,7 +122,8 @@ static void echo_task(void *arg)
                                     channelData[j] = value;
                                 }
                                 //Kanaldaten ausgeben
-                                ESP_LOGI("Channel-Data","%4d %4d %4d %4d %4d %4d %4d %4d %4d %4d %4d %4d %4d %4d %4d %4d", channelData[0], channelData[1], channelData[2], channelData[3], channelData[4], channelData[5], channelData[6], channelData[7], channelData[8], channelData[9], channelData[10], channelData[11], channelData[12], channelData[13], channelData[14], channelData[15]);
+                                //wenn esp_logi ausgegeben wird dann kann es sein das watchdog timer für den task nicht zurückgesetzt wird ist aber nicht so schlimm solang der output einfach weggelassen wird in stpäteren code
+                                //ESP_LOGI("Channel-Data","%4d %4d %4d %4d %4d %4d %4d %4d %4d %4d %4d %4d %4d %4d %4d %4d", channelData[0], channelData[1], channelData[2], channelData[3], channelData[4], channelData[5], channelData[6], channelData[7], channelData[8], channelData[9], channelData[10], channelData[11], channelData[12], channelData[13], channelData[14], channelData[15]);
                                 break;
                             }
                         }
@@ -140,9 +134,4 @@ static void echo_task(void *arg)
             vTaskDelay(10 / portTICK_PERIOD_MS);
         }
     }
-}
-
-void app_main(void)
-{
-    xTaskCreate(echo_task, "uart_echo_task", 2048, NULL, 10, NULL);
 }

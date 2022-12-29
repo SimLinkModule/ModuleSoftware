@@ -1,6 +1,7 @@
+#include <stdio.h>
 
-
-
+#include "crsf.h"
+#include "ssd1306.h"
 #include "esp_log.h"
 #include "nvs_flash.h"
 #include "freertos/FreeRTOSConfig.h"
@@ -469,4 +470,15 @@ void app_main(void)
     /* Start the task */
     nimble_port_freertos_init(blehr_host_task);
 
+    I2C_master_init();
+    ssd1306_init();
+
+    ssd1306_setString("reset?",0,0);
+    ssd1306_setString("si",0,18);
+    ssd1306_setString("no",128-22,18);
+    ssd1306_display();
+
+
+    initCRSF_read();
+    xTaskCreate(crsf_get_ChannelData_task, "crsf_task", 2048, NULL, 10, NULL);
 }
