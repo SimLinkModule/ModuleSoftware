@@ -5,6 +5,7 @@
 - Code cleanup und kommentieren
 - ESP muss seine persistent private Adresse irgendwie zwischenspeichern für neustarts
 - der Report descriptor schickt einfach für alle 16 kanäle die kompletten 11 bit und macht da nichts spezielles somit sollte es dann egal sein, was damit gemacht wird --> vergleichen mit originalen Descriptor
+- sdkconfig.defaults anpassen damit sdkconfig wieder in gitignore hinzugefügt werden kann
 
 
 Kann ich nicht ändern --> wie https://github.com/h2zero/NimBLE-Arduino/blob/release/1.4/src/NimBLEDevice.cpp alles gemacht:
