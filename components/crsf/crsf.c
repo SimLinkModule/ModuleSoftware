@@ -20,6 +20,20 @@ uint8_t crcMessage(uint8_t message[], uint8_t length)
     return crc;
 }
 
+//scale from range [173,1811] to range [0,2047]
+uint16_t scale_Range_Analog(uint16_t value){
+    return (uint16_t)((value-173)*1.25);
+}
+
+//scale from range [173,1811] to range [0,1]
+uint8_t scale_Range_Digital(uint16_t value){
+    if(value <= 992){
+        return 0;
+    } else {
+        return 1;
+    }
+}
+
 void initCRSF_read(){
     /* Configure parameters of an UART driver,
      * communication pins and install the driver */
@@ -56,6 +70,9 @@ void crsf_get_ChannelData_task(void *arg)
     uint8_t *data = (uint8_t *) malloc(1024);
 
     while (1) {
+        //bool if channel data changed from channeldata t-1
+        bool changed = false;
+
         // get size in uart buffer
         int length = 0;
         ESP_ERROR_CHECK(uart_get_buffered_data_len(UART_NUM_2, (size_t*)&length));
@@ -118,12 +135,94 @@ void crsf_get_ChannelData_task(void *arg)
                                         used = 11-availableBits;
                                     }
 
-                                    //Kanaldaten abspeichern
-                                    channelData[j] = value;
+                                    //Kanaldaten abspeichern --> ersten 8 kanäle sind analog rest digital
+                                    uint16_t newVal;
+                                    uint8_t origDataButtons;
+                                    switch(j){
+                                        case 0:
+                                            newVal = scale_Range_Analog(value);
+                                            if(channelData.throttle != newVal){
+                                                changed = true;
+                                                channelData.throttle = newVal;
+                                            }
+                                            break;
+                                        case 1:
+                                            newVal = scale_Range_Analog(value);
+                                            if(channelData.yaw != newVal){
+                                                changed = true;
+                                                channelData.yaw = newVal;
+                                            }
+                                            break;
+                                        case 2:
+                                            newVal = scale_Range_Analog(value);
+                                            if(channelData.pitch != newVal){
+                                                changed = true;
+                                                channelData.pitch = newVal;
+                                            }
+                                            break;
+                                        case 3:
+                                            newVal = scale_Range_Analog(value);
+                                            if(channelData.roll != newVal){
+                                                changed = true;
+                                                channelData.roll = newVal;
+                                            }
+                                            break;
+                                        case 4:
+                                            newVal = scale_Range_Analog(value);
+                                            if(channelData.aux1 != newVal){
+                                                changed = true;
+                                                channelData.aux1 = newVal;
+                                            }
+                                            break;
+                                        case 5:
+                                            newVal = scale_Range_Analog(value);
+                                            if(channelData.aux2 != newVal){
+                                                changed = true;
+                                                channelData.aux2 = newVal;
+                                            } 
+                                            break;
+                                        case 6:
+                                            newVal = scale_Range_Analog(value);
+                                            if(channelData.aux3 != newVal){
+                                                changed = true;
+                                                channelData.aux3 = newVal;
+                                            }
+                                            break;
+                                        case 7:
+                                            newVal = scale_Range_Analog(value);
+                                            if(channelData.aux4 != newVal){
+                                                changed = true;
+                                                channelData.aux4 = newVal;
+                                            }
+                                            break;
+                                        case 8:
+                                        case 9:
+                                        case 10:
+                                        case 11:
+                                        case 12:
+                                        case 13:
+                                        case 14:
+                                        case 15:
+                                            origDataButtons = channelData.buttons;
+                                            if(scale_Range_Digital(value) == 1){
+                                                channelData.buttons = channelData.buttons | (0x01 << (j-8));
+                                            } else {
+                                                channelData.buttons = channelData.buttons & (~(0x01 << (j-8)));
+                                            }
+
+                                            if(origDataButtons != channelData.buttons){
+                                                changed = true;
+                                            }
+
+                                            break;
+                                    }
                                 }
                                 //Kanaldaten ausgeben
                                 //wenn esp_logi ausgegeben wird dann kann es sein das watchdog timer für den task nicht zurückgesetzt wird ist aber nicht so schlimm solang der output einfach weggelassen wird in stpäteren code
-                                //ESP_LOGI("Channel-Data","%4d %4d %4d %4d %4d %4d %4d %4d %4d %4d %4d %4d %4d %4d %4d %4d", channelData[0], channelData[1], channelData[2], channelData[3], channelData[4], channelData[5], channelData[6], channelData[7], channelData[8], channelData[9], channelData[10], channelData[11], channelData[12], channelData[13], channelData[14], channelData[15]);
+                                if(changed){
+                                    ESP_LOGI("","NOTIFY");
+                                }
+                                ESP_LOGI("Channel-Data","%4d %4d %4d %4d %4d %4d %4d %4d %4d %4d %4d %4d %4d %4d %4d %4d", channelData.throttle, channelData.yaw, channelData.pitch, channelData.roll, channelData.aux1, channelData.aux2, channelData.aux3, channelData.aux4, (channelData.buttons & (0x01<<0)), (channelData.buttons & (0x01<<1)), (channelData.buttons & (0x01<<2)), (channelData.buttons & (0x01<<3)), (channelData.buttons & (0x01<<4)), (channelData.buttons & (0x01<<5)), (channelData.buttons & (0x01<<6)), (channelData.buttons & (0x01<<7)));
                                 break;
                             }
                         }

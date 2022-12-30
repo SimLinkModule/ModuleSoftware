@@ -1,10 +1,16 @@
+- Report deskriptor austauschen mit neuen --> report id noch hinzufügen
+- struct verschicken mittels bluetooth --> nur wenn sich was verändert hat an den Daten
+- hr functionen löschen
+- testen mit velocidrone
+- wenn verbindung getrennt wird oder notify beendet wird nicht mehr notifies schicken
+
+
 - Update connection parameter wieder hinzufügen (bleprh anschauen)
     - Update connection parameters are not allowed during iPhone HID encryption, slave turns off the ability to automatically update connection parameters during encryption.
 - Bei einem erneuten verbindungsaufbau wird das gestoppte updaten der daten nicht wieder gestartet
 
 - Code cleanup und kommentieren
 - ESP muss seine persistent private Adresse irgendwie zwischenspeichern für neustarts
-- der Report descriptor schickt einfach für alle 16 kanäle die kompletten 11 bit und macht da nichts spezielles somit sollte es dann egal sein, was damit gemacht wird --> vergleichen mit originalen Descriptor
 - sdkconfig.defaults anpassen damit sdkconfig wieder in gitignore hinzugefügt werden kann
 
 
