@@ -1,3 +1,6 @@
+- BLE aufräumen
+- Einrichten, dass esp nach einen neustart die gleiche adresse erhält
+
 - Report deskriptor austauschen mit neuen --> report id noch hinzufügen
 - struct verschicken mittels bluetooth --> nur wenn sich was verändert hat an den Daten
 - hr functionen löschen

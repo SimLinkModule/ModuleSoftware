@@ -226,6 +226,9 @@ blehr_gap_event(struct ble_gap_event *event, void *arg)
             //ESP_ERROR_CHECK(ble_gap_update_params(event->connect.conn_handle, &connectionParameters));
         }
 
+
+        conn_handle = event->connect.conn_handle;
+
         break;
 
     case BLE_GAP_EVENT_DISCONNECT:
