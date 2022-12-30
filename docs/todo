@@ -1,5 +1,15 @@
 - BLE aufräumen
 - Einrichten, dass esp nach einen neustart die gleiche adresse erhält
+    --> NRPA benötigte ich nicht, da diese nicht von anderen für erkennung verwendet werden kann --> RPA benötigt (ble_hs_resolv_gen_priv_addr)
+        --> ble_hs_gen_own_private_rnd besser
+        --> ble_hs_util_ensure_addr rückgabewert schauen ob BLE_HS_ENOADDR zurückgegeben wird wäre schlecht
+        https://github.com/h2zero/NimBLE-Arduino/blob/1cddddb8b82c35d60c81a3bb6732b074c3e64b63/src/nimble/nimble/host/include/host/ble_hs_pvcy.h
+        https://stackoverflow.com/questions/70583605/does-ble-device-generates-new-ltk-csrk-and-irk-every-time-it-bonds-with-new-de
+        https://github.com/h2zero/NimBLE-Arduino/blob/1cddddb8b82c35d60c81a3bb6732b074c3e64b63/src/nimble/nimble/host/src/ble_hs_pvcy.c#L255
+        https://github.com/h2zero/NimBLE-Arduino/blob/1cddddb8b82c35d60c81a3bb6732b074c3e64b63/src/nimble/nimble/include/nimble/ble.h#L268
+        https://github.com/h2zero/NimBLE-Arduino/blob/1cddddb8b82c35d60c81a3bb6732b074c3e64b63/src/nimble/nimble/host/src/ble_hs_hci_evt.c#L351
+        https://github.com/h2zero/NimBLE-Arduino/blob/1cddddb8b82c35d60c81a3bb6732b074c3e64b63/src/nimble/nimble/host/include/host/ble_hs_id.h#L38
+        https://github.com/h2zero/NimBLE-Arduino/blob/1cddddb8b82c35d60c81a3bb6732b074c3e64b63/src/nimble/nimble/host/src/ble_hs_id.c#L102
 
 - Report deskriptor austauschen mit neuen --> report id noch hinzufügen
 - struct verschicken mittels bluetooth --> nur wenn sich was verändert hat an den Daten
