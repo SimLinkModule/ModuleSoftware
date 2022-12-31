@@ -108,8 +108,8 @@ void app_main(void)
     ssd1306_setString("Welcome",25,9);
     ssd1306_display();
 
-    //display screen one second before starting up ble and crsf read
-    vTaskDelay(1000 / portTICK_PERIOD_MS);
+    //display screen 2 seconds before starting up ble and crsf read
+    vTaskDelay(2000 / portTICK_PERIOD_MS);
     ssd1306_clear();
     ssd1306_display();
 
