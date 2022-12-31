@@ -10,6 +10,8 @@
         "string_view": "c",
         "ble_svc_gap.h": "c",
         "console.h": "c",
-        "esp_nimble_hci.h": "c"
+        "esp_nimble_hci.h": "c",
+        "stdio.h": "c",
+        "freertosconfig.h": "c"
     }
 }
