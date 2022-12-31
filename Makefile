@@ -3,6 +3,6 @@
 # project subdirectory.
 #
 
-PROJECT_NAME := blehr
+PROJECT_NAME := simlinkModule
 
 include $(IDF_PATH)/make/project.mk

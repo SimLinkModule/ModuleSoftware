@@ -470,18 +470,25 @@ void app_main(void)
     rc = ble_svc_gap_device_name_set(CONFIG_BT_NIMBLE_SVC_GAP_DEVICE_NAME);
     assert(rc == 0);
 
-    /* Start the task */
-    nimble_port_freertos_init(blehr_host_task);
-
+    //init i2c for the oled display
     I2C_master_init();
     ssd1306_init();
 
-    ssd1306_setString("reset?",0,0);
-    ssd1306_setString("si",0,18);
-    ssd1306_setString("no",128-22,18);
+    //init uart for crsf
+    initCRSF_read();
+
+    //welcome screen
+    ssd1306_setString("Welcome",25,9);
     ssd1306_display();
 
+    //display screen one second before starting up ble and crsf read
+    vTaskDelay(1000 / portTICK_PERIOD_MS);
+    ssd1306_clear();
+    ssd1306_display();
 
-    initCRSF_read();
+    /* Start ble task */
+    nimble_port_freertos_init(blehr_host_task);
+
+    //task to read crsf uart ata
     xTaskCreate(crsf_get_ChannelData_task, "crsf_task", 2048, NULL, 10, NULL);
 }
