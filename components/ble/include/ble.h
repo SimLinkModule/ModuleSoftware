@@ -15,7 +15,7 @@
 #include "host/util/util.h"
 #include "nimble/nimble_port_freertos.h"
 
-extern uint8_t bleAddressType = BLE_ADDR_RANDOM;
+extern uint8_t bleAddressType;
 static const char *tag_BLE = "SimLinkModule_BLE";
 
 void initBLE();

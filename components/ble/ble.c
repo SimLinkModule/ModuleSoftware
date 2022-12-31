@@ -1,5 +1,7 @@
 #include "ble.h"
 
+uint8_t bleAddressType = BLE_ADDR_RANDOM;
+
 void initBLE(){
     //store for returncodes
     //mynewt.apache.org/latest/network/ble_hs/ble_hs_return_codes.html

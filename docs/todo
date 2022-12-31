@@ -1,4 +1,3 @@
-- BLE aufräumen
 - Einrichten, dass esp nach einen neustart die gleiche adresse erhält
     --> NRPA benötigte ich nicht, da diese nicht von anderen für erkennung verwendet werden kann --> RPA benötigt (ble_hs_resolv_gen_priv_addr)
         --> ble_hs_gen_own_private_rnd besser
