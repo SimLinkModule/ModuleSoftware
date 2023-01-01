@@ -25,4 +25,7 @@ void bleHostTask(void *param);
 
 void print_addr(const void *addr);
 
+/* Define template prototype for store*/
+void ble_store_config_init(void);
+
 #endif

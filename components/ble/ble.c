@@ -70,6 +70,11 @@ void initBLE(){
     /* Set the default device name */
     rc = ble_svc_gap_device_name_set(CONFIG_BT_NIMBLE_SVC_GAP_DEVICE_NAME);
     assert(rc == 0);
+
+    //https://github.com/espressif/esp-nimble/issues/33
+    //KEINE AHNUNG WAS DAS MACHT ABER DADURCH KANN SICH DER ESP NACH EINEN NEUSTART WIEDER MIT DEM GERÄT VERBINDEN
+    /* XXX Need to have template for store */
+    ble_store_config_init();
 }
 
 //This callback is executed when the host and controller become synced. This happens at startup and after a reset
@@ -79,12 +84,12 @@ void bleOnSync(void){
     ble_hs_pvcy_rpa_config(1);
 
     /* Make sure we have proper identity address set (public preferred) */
-    rc = ble_hs_util_ensure_addr(0);
+    //rc = ble_hs_util_ensure_addr(0);
 
 
     /*use privacy*/
-    rc = ble_hs_id_infer_auto(bleAddressType, &bleAddressType);
-    assert(rc == 0);
+    //rc = ble_hs_id_infer_auto(bleAddressType, &bleAddressType);
+    //assert(rc == 0);
 
     uint8_t addr_val[6] = {0};
     if(BLE_HS_ENOADDR == ble_hs_id_copy_addr(BLE_ADDR_PUBLIC, addr_val, NULL)) {
