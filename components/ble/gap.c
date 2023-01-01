@@ -6,6 +6,10 @@
  *     o Undirected connectable mode
  */
 void bleAdvertise(void){
+    ssd1306_clear();
+    ssd1306_setString("Connecting",10,9);
+    ssd1306_display();
+
     struct ble_gap_adv_params adv_params;
     struct ble_hs_adv_fields fields;
     int rc;
@@ -81,6 +85,10 @@ int bleGAPEevent(struct ble_gap_event *event, void *arg) {
             /* Connection failed; resume advertising */
             bleAdvertise();
         } else {
+            ssd1306_clear();
+            ssd1306_display();
+
+
             struct ble_gap_upd_params connectionParameters = {
                 //itvl: These determine how often the devices will "ping-pong" each other and also when they will send any data required. So if you set the value to something like 20, that would mean packets are sent every 25ms, which will obviously consume more power than say a value of 80 (100ms). The reason for the min max values is so the devices can negotiate a compromise for the best possible communication, you can set these to the same value if you prefer.
                 .itvl_min = (int)(11.25/1.25), //1.25ms units; laut apple 11.25 minimum fuer hid
@@ -101,7 +109,10 @@ int bleGAPEevent(struct ble_gap_event *event, void *arg) {
 
     case BLE_GAP_EVENT_DISCONNECT:
         ESP_LOGI(tag_GAP, "disconnect; reason=%d\n", event->disconnect.reason);
+        ESP_LOGI(tag_GAP, "%d",event->disconnect.conn.conn_handle);
+        print_addr(event->disconnect.conn.peer_id_addr.val);
         //531 = Remote User Terminated Connection
+        //517 = Authentication Failure
 
         /* Connection terminated; resume advertising */
         bleAdvertise();
@@ -109,7 +120,9 @@ int bleGAPEevent(struct ble_gap_event *event, void *arg) {
 
     case BLE_GAP_EVENT_ADV_COMPLETE:
         ESP_LOGI(tag_GAP, "adv complete; reason = %d\n", event->adv_complete.reason);
-        bleAdvertise();
+        if(event->adv_complete.reason != 0){
+            bleAdvertise();
+        }
         break;
 
     case BLE_GAP_EVENT_SUBSCRIBE:
@@ -149,7 +162,7 @@ int bleGAPEevent(struct ble_gap_event *event, void *arg) {
          * establish a new secure link.  This app sacrifices security for
          * convenience: just throw away the old bond and accept the new link.
          */
-        ESP_LOGI(tag_GAP, "establisch new secure link");
+        ESP_LOGI(tag_GAP, "establish new secure link");
 
         /* Delete the old bond. */
         rc = ble_gap_conn_find(event->repeat_pairing.conn_handle, &desc);

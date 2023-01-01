@@ -10,6 +10,7 @@
 
 #include "gatt.h"
 #include "ble.h"
+#include "ssd1306.h"
 
 static const char *tag_GAP = "SimLinkModule_GAP";
 static const ble_uuid16_t hid_service_uuid = BLE_UUID16_INIT(0x1812);

@@ -11,22 +11,6 @@ static xTimerHandle blehr_tx_timer;
 
 static bool volumeUp = true;
 
-static void
-ble_app_set_addr(void)
-{
-    ble_addr_t addr;
-    int rc;
-
-    /* generate new non-resolvable private address */
-    rc = ble_hs_id_gen_rnd(0, &addr);
-    assert(rc == 0);
-
-    /* set generated address */
-    rc = ble_hs_id_set_rnd(addr.val);
-
-    assert(rc == 0);
-}
-
 /**
  * Utility function to log an array of bytes.
  */

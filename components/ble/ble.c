@@ -76,9 +76,6 @@ void initBLE(){
 void bleOnSync(void){
     int rc;
 
-    /* Generate a non-resolvable private address. */
-    //ble_app_set_addr();
-
     ble_hs_pvcy_rpa_config(1);
 
     /* Make sure we have proper identity address set (public preferred) */
@@ -90,7 +87,12 @@ void bleOnSync(void){
     assert(rc == 0);
 
     uint8_t addr_val[6] = {0};
-    rc = ble_hs_id_copy_addr(bleAddressType, addr_val, NULL);
+    if(BLE_HS_ENOADDR == ble_hs_id_copy_addr(BLE_ADDR_PUBLIC, addr_val, NULL)) {
+        ble_hs_id_copy_addr(BLE_ADDR_RANDOM, addr_val, NULL);
+        ESP_LOGI(tag_BLE, "Device Address-Type: random");
+    } else {
+        ESP_LOGI(tag_BLE, "Device Address-Type: public");
+    }
 
     ESP_LOGI(tag_BLE, "Device Address: ");
     print_addr(addr_val);
