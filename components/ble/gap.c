@@ -102,6 +102,7 @@ int bleGAPEevent(struct ble_gap_event *event, void *arg) {
                 .supervision_timeout = 1860/10 //10ms units, laut apple größer als itvl_max * (latency + 1) * 3
             };
 
+            //Update connection parameters are not allowed during iPhone HID encryption, slave turns off the ability to automatically update connection parameters during encryption.
             ESP_ERROR_CHECK(ble_gap_update_params(event->connect.conn_handle, &connectionParameters));
         }
 

@@ -18,6 +18,10 @@ static const uint8_t reportReferenceChar[2] = {
     0x01                                                //input: 0x01, output: 0x02, feature: 0x03
 };
 
+
+//https://github.com/betaflight/betaflight/blob/025ee87a7aca068e3659fd066b8a9afbed123361/lib/main/STM32_USB_Device_Library/Class/hid/src/usbd_hid_core.c#L239
+//https://github.com/betaflight/betaflight/blob/c5468981e68795c674b76788abe820a7870f62a8/src/main/io/usb_cdc_hid.c#L56
+//originaller tbs tango hid report descriptor
 static const uint8_t hidReportMap[] = {
     0x05, 0x01,        // Usage Page (Generic Desktop Ctrls)
     0x09, 0x05,        // Usage (Game Pad)
