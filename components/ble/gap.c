@@ -102,7 +102,7 @@ int bleGAPEevent(struct ble_gap_event *event, void *arg) {
                 .supervision_timeout = 1860/10 //10ms units, laut apple größer als itvl_max * (latency + 1) * 3
             };
 
-            //ESP_ERROR_CHECK(ble_gap_update_params(event->connect.conn_handle, &connectionParameters));
+            ESP_ERROR_CHECK(ble_gap_update_params(event->connect.conn_handle, &connectionParameters));
         }
 
 

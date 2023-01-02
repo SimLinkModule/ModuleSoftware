@@ -8,6 +8,7 @@
 #include <stdbool.h>
 
 #include "gap.h"
+#include "host/ble_gatt.h"
 
 //struct for channel data
 typedef struct ChannelDataStruct{
