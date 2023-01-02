@@ -1,7 +1,0 @@
-Linux reicht es wenn irgendwie viel bytes im report sind, welches zum gerät geschickt wird.
-Windows und Android muss die report größe mit der größe des report deskriptors übereinstimmen.
-IOS benötigt eine sichere Verbindung und dann noch die erlaubnis auf das report zuzugreifen wenn es eine sichere verbindung ist. Zusätzlich darf während dem aufbau einer sicheren verbindung keine connection updates durchgeführt werden.
-
-Zusätzlich muss für ios die irk key von ios geräten zwischengespeichert werden, da nach einen neustart des ios geräts oder alle x minuten die bluetooth adresse erneurt wird und sonst das gerät sich nicht mehr mit dem esp verbinden kann.
-
-Resolvable private (RPA) --> Address randomly generated from an identity address and an identity resolving key (IRK).

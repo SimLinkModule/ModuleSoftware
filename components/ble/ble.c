@@ -81,6 +81,7 @@ void initBLE(){
 void bleOnSync(void){
     int rc;
 
+    //rpa = resolvable private address; Address randomly generated from an identity address and an identity resolving key (IRK).
     ble_hs_pvcy_rpa_config(1);
 
     /* Make sure we have proper identity address set (public preferred) */

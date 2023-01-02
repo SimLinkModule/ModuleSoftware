@@ -26,6 +26,8 @@ void bleHostTask(void *param);
 void print_addr(const void *addr);
 
 /* Define template prototype for store*/
+//located in nimble/host/store/config/src/ble_store_config.c
+//never definded in a .h file
 void ble_store_config_init(void);
 
 #endif

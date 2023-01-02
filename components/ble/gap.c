@@ -113,6 +113,7 @@ int bleGAPEevent(struct ble_gap_event *event, void *arg) {
         print_addr(event->disconnect.conn.peer_id_addr.val);
         //531 = Remote User Terminated Connection
         //517 = Authentication Failure
+        //573 = Connection Terminated due to MIC Failure
 
         /* Connection terminated; resume advertising */
         bleAdvertise();
