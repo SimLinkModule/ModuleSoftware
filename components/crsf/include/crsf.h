@@ -7,6 +7,8 @@
 #include "esp_log.h"
 #include <stdbool.h>
 
+#include "gap.h"
+
 //struct for channel data
 typedef struct ChannelDataStruct{
   uint16_t roll;        //roll = x
@@ -21,7 +23,7 @@ typedef struct ChannelDataStruct{
 } ChannelDataStruct;
 
 //store for channeldata
-static ChannelDataStruct channelData = {0};
+extern ChannelDataStruct channelData;
 
 uint8_t crcSingleChar(uint8_t crc, uint8_t a);
 uint8_t crcMessage(uint8_t message[], uint8_t length);

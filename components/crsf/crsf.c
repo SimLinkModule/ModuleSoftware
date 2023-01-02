@@ -1,5 +1,7 @@
 #include "crsf.h"
 
+ChannelDataStruct channelData = {0};
+
 uint8_t crcSingleChar(uint8_t crc, uint8_t a)
 {
     crc ^= a;
@@ -220,9 +222,18 @@ void crsf_get_ChannelData_task(void *arg)
                                 //Kanaldaten ausgeben
                                 //wenn esp_logi ausgegeben wird dann kann es sein das watchdog timer für den task nicht zurückgesetzt wird ist aber nicht so schlimm solang der output einfach weggelassen wird in stpäteren code
                                 if(changed){
-                                    ESP_LOGI("","NOTIFY");
+                                    int rc;
+                                    struct os_mbuf *om;
+
+                                    if(notify_state){
+                                        ESP_LOGI("","BLE NOTIFY");
+                                        om = ble_hs_mbuf_from_flat(&channelData, sizeof(channelData));
+                                        rc = ble_gattc_notify_custom(conn_handle, report_data_handle, om);
+
+                                        assert(rc == 0);
+                                    }
                                 }
-                                ESP_LOGI("Channel-Data","%4d %4d %4d %4d %4d %4d %4d %4d %4d %4d %4d %4d %4d %4d %4d %4d", channelData.throttle, channelData.yaw, channelData.pitch, channelData.roll, channelData.aux1, channelData.aux2, channelData.aux3, channelData.aux4, (channelData.buttons & (0x01<<0)), (channelData.buttons & (0x01<<1)), (channelData.buttons & (0x01<<2)), (channelData.buttons & (0x01<<3)), (channelData.buttons & (0x01<<4)), (channelData.buttons & (0x01<<5)), (channelData.buttons & (0x01<<6)), (channelData.buttons & (0x01<<7)));
+                                //ESP_LOGI("Channel-Data","%4d %4d %4d %4d %4d %4d %4d %4d %4d %4d %4d %4d %4d %4d %4d %4d", channelData.throttle, channelData.yaw, channelData.pitch, channelData.roll, channelData.aux1, channelData.aux2, channelData.aux3, channelData.aux4, (channelData.buttons & (0x01<<0)), (channelData.buttons & (0x01<<1)), (channelData.buttons & (0x01<<2)), (channelData.buttons & (0x01<<3)), (channelData.buttons & (0x01<<4)), (channelData.buttons & (0x01<<5)), (channelData.buttons & (0x01<<6)), (channelData.buttons & (0x01<<7)));
                                 break;
                             }
                         }

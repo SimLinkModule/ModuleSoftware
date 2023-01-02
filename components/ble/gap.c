@@ -1,5 +1,8 @@
 #include "gap.h"
 
+uint16_t conn_handle = 0;
+bool notify_state = false;
+
 /*
  * Enables advertising with parameters:
  *     o General discoverable mode
@@ -141,10 +144,8 @@ int bleGAPEevent(struct ble_gap_event *event, void *arg) {
 
         if (event->subscribe.attr_handle == report_data_handle) {
             notify_state = event->subscribe.cur_notify;
-            //blehr_tx_hrate_reset();
         } else if (event->subscribe.attr_handle != report_data_handle) {
             notify_state = event->subscribe.cur_notify;
-            //blehr_tx_hrate_stop();
         }
         ESP_LOGI(tag_GAP, "conn_handle from subscribe=%d", conn_handle);
         break;
