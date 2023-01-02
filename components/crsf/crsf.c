@@ -83,7 +83,7 @@ void crsf_get_ChannelData_task(void *arg)
         if(length){
 
             //read uart data
-            int len = uart_read_bytes(UART_NUM_2, data, length, 20 / portTICK_RATE_MS);
+            int len = uart_read_bytes(UART_NUM_2, data, length, 20 / portTICK_PERIOD_MS);
 
             //RX Buffer leeren wenn Frame im temporären buffer
             uart_flush(UART_NUM_2);
@@ -227,6 +227,7 @@ void crsf_get_ChannelData_task(void *arg)
 
                                     if(notify_state){
                                         om = ble_hs_mbuf_from_flat(&channelData, sizeof(channelData));
+                                        //Deprecated. Should not be used. Use ble_gatts_notify_custom instead.
                                         rc = ble_gattc_notify_custom(conn_handle, report_data_handle, om);
 
                                         //assert(rc == 0);

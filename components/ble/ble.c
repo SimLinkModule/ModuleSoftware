@@ -18,7 +18,8 @@ void initBLE(){
     }
     ESP_ERROR_CHECK(ret);
 
-    ESP_ERROR_CHECK(esp_nimble_hci_and_controller_init());
+    //Controller initialization, enable and HCI initialization calls have been moved to nimble_port_init. This function can be deleted directly.
+    //ESP_ERROR_CHECK(esp_nimble_hci_and_controller_init());
 
     nimble_port_init();
 

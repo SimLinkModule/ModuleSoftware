@@ -66,7 +66,7 @@
 #define SSD1306_CMD_DEACTIVE_SCROLL        0x2E
 
 //buffer damit der aktuelle Output auch im Speicher des ESP vorhanden ist
-uint8_t* ssd1306_buffer;
+static uint8_t* ssd1306_buffer;
 
 void ssd1306_init();
 void I2C_master_init();
