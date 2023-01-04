@@ -1,13 +1,10 @@
-- ADC zur spannungsanzeige implemtentieren
-- ReadMe anpassen mit dem Pinout
-- sdkconfig vergleichen, ob bei v5.0 neue möglichkeiten hinzugekommen sind
+- buttons hinzufügen
+- LEDs hinzufügen
+- Display output hinzufügen
 - kommentieren und in .md-Datein dokumentieren, wo was zu finden ist
 
 - Bei einem erneuten verbindungsaufbau wird das gestoppte updaten der daten nicht wieder gestartet
 - ios funktioniert nicht / kann nicht getestet werden
 
-- buttons hinzufügen
-- LEDs hinzufügen
-- Display output hinzufügen
-- freertos timer stürzt zu oft ab fehler beheben wie im forum steht
+- button entprellen in finaler platine
 - Verbindung zu ADC sollte eigentlich mit Transistor geschalten werden damit nicht dauerhat strom fließt zu maße über den Spannungsteiler, auch sollte ein kondensator noch hinzugefügt werden, damit rauschen vermindert wird.

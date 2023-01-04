@@ -40,6 +40,11 @@ void app_main(void)
     //task to read crsf uart data
     xTaskCreate(crsf_get_ChannelData_task, "crsf_task", 4096, NULL, 10, NULL);
 
+    /*##########################################################
+    ############################################################
+    # nicht verwendet, da keine Batteriespannung vorhanden ist #
+    ############################################################
+    ############################################################
     //timer to read battery percentage via ADC
     initBatteryRead();
     //wert jede sekunde auslesen --> aus 10 messungen wird der mittelwert gebildet --> vermindern von rauschen
@@ -50,4 +55,5 @@ void app_main(void)
         //display a default value if the timer cannot be started
         batteryPercentage = 7;
     }
+    */
 }
