@@ -4,8 +4,14 @@
 #include "crsf.h"
 #include "ssd1306.h"
 #include "ble.h"
+#include "battery.h"
 
+//#include "freertos/projdefs.h"
 #include "freertos/FreeRTOSConfig.h"
+#include "freertos/timers.h"
+#include "freertos/task.h"
+
+static TimerHandle_t batteryTimerHandle;
 
 void app_main(void)
 {
@@ -33,4 +39,14 @@ void app_main(void)
 
     //task to read crsf uart data
     xTaskCreate(crsf_get_ChannelData_task, "crsf_task", 4096, NULL, 10, NULL);
+
+    //timer to read battery percentage via ADC
+    //wert alle 10 sekunden auslesen
+    batteryTimerHandle = xTimerCreate("battery_timer", pdMS_TO_TICKS(10000), pdTRUE, (void *)0, battery_Timer_Event);
+
+    //start the timer
+    if (xTimerStart(batteryTimerHandle, 1000 / portTICK_PERIOD_MS ) != pdPASS) {
+        //display a default value if the timer cannot be started
+        batteryPercentage = 7;
+    }
 }

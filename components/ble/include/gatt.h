@@ -6,7 +6,10 @@
 #include "services/gap/ble_svc_gap.h"
 #include "services/gatt/ble_svc_gatt.h"
 #include "host/ble_hs.h"
+
 #include "crsf.h"
+#include "gap.h"
+#include "battery.h"
 
 /* device info configuration */
 #define GATT_DEVICE_INFO_UUID                   0x180A
@@ -39,7 +42,9 @@
 static const char *tag_GATT = "SimLinkModule_GATT";
 
 //The value handle of the relevant characteristic for notification
-extern uint16_t report_data_handle;
+extern uint16_t report_data_handle;     //report daten
+extern uint16_t battery_status_handle;  //battery status
+
 
 //zu verschickender report muss immer so groß sein wie auch der report groß ist sonst geht es nicht
 static uint8_t reportData[1] = {

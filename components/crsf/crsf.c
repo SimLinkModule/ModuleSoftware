@@ -225,7 +225,7 @@ void crsf_get_ChannelData_task(void *arg)
                                     int rc;
                                     struct os_mbuf *om;
 
-                                    if(notify_state){
+                                    if(notify_state_report_data){
                                         om = ble_hs_mbuf_from_flat(&channelData, sizeof(channelData));
                                         //Deprecated. Should not be used. Use ble_gatts_notify_custom instead.
                                         rc = ble_gattc_notify_custom(conn_handle, report_data_handle, om);

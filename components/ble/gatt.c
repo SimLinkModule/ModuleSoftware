@@ -1,6 +1,7 @@
 #include "gatt.h"
 
 uint16_t report_data_handle;
+uint16_t battery_status_handle;
 
 static const char *manuf_name = "SimLinkModule";
 static const char *model_num = "P-1.0";
@@ -95,7 +96,8 @@ static const struct ble_gatt_svc_def gatt_svr_svcs[] = {
                 /* Characteristic: Battery Level */
                 .uuid = BLE_UUID16_DECLARE(GATT_BATTERY_LEVEL_UUID),
                 .access_cb = gatt_svr_chr_access_device_info,
-                .flags = BLE_GATT_CHR_F_READ,
+                .val_handle = &battery_status_handle,
+                .flags = BLE_GATT_CHR_F_READ | BLE_GATT_CHR_F_NOTIFY,
             }, {
                 0, /* No more characteristics in this service */
             },
@@ -176,7 +178,7 @@ int gatt_svr_chr_access_device_info(uint16_t conn_handle, uint16_t attr_handle, 
     }
 
     if (uuid == GATT_BATTERY_LEVEL_UUID) {
-        int percentage = 99;
+        int percentage = batteryPercentage;
         rc = os_mbuf_append(ctxt->om, &percentage, sizeof(percentage));
         return rc == 0 ? 0 : BLE_ATT_ERR_INSUFFICIENT_RES;
     }
@@ -268,6 +270,8 @@ int gatt_svr_chr_hid(uint16_t conn_handle, uint16_t attr_handle, struct ble_gatt
             //nur das erste bit betrachten
             //unter ios wird der suspend state schon geändert wenn man das gerät nur umdreht und das display noch nicht eingeschalten hat :)
             int wakeupInfo = *test & 0b11;
+            notify_state_report_data = wakeupInfo;
+            notify_state_battery_status = wakeupInfo;
             ESP_LOGW(tag_GATT, "WRITE TO CONTROL POINT %d",wakeupInfo);
 			return 0;
     }

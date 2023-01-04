@@ -1,7 +1,8 @@
 #include "gap.h"
 
 uint16_t conn_handle = 0;
-bool notify_state = false;
+bool notify_state_report_data = false;
+bool notify_state_battery_status = false;
 
 /*
  * Enables advertising with parameters:
@@ -119,6 +120,9 @@ int bleGAPEevent(struct ble_gap_event *event, void *arg) {
         //517 = Authentication Failure
         //573 = Connection Terminated due to MIC Failure
 
+        notify_state_report_data = false;
+        notify_state_battery_status = false;
+
         /* Connection terminated; resume advertising */
         bleAdvertise();
         break;
@@ -144,10 +148,14 @@ int bleGAPEevent(struct ble_gap_event *event, void *arg) {
         }
 
         if (event->subscribe.attr_handle == report_data_handle) {
-            notify_state = event->subscribe.cur_notify;
-        } else if (event->subscribe.attr_handle != report_data_handle) {
-            notify_state = event->subscribe.cur_notify;
+            //check if the device subscribed to the report data notifies
+            notify_state_report_data = event->subscribe.cur_notify;
+        } else if (event->subscribe.attr_handle == battery_status_handle) {
+            //check if the device subscribed to the battery status notifies
+            notify_state_battery_status = event->subscribe.cur_notify;
         }
+
+
         ESP_LOGI(tag_GAP, "conn_handle from subscribe=%d", conn_handle);
         break;
 
@@ -226,7 +234,6 @@ int bleGAPEevent(struct ble_gap_event *event, void *arg) {
     case BLE_GAP_EVENT_NOTIFY_TX:
         //Represents a transmitted ATT notification or indication, or a
         //completed indication transaction.
-        ESP_LOGI(tag_GAP, "notify tx event occured");
         return 0;
     default:
         ESP_LOGI(tag_GAP, "GAP EVENT ID: %d\n",event->type);
