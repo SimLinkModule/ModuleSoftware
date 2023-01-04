@@ -9,3 +9,5 @@
 - buttons hinzufügen
 - LEDs hinzufügen
 - Display output hinzufügen
+- freertos timer stürzt zu oft ab fehler beheben wie im forum steht
+- Verbindung zu ADC sollte eigentlich mit Transistor geschalten werden damit nicht dauerhat strom fließt zu maße über den Spannungsteiler, auch sollte ein kondensator noch hinzugefügt werden, damit rauschen vermindert wird.

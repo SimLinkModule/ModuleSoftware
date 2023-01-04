@@ -41,8 +41,9 @@ void app_main(void)
     xTaskCreate(crsf_get_ChannelData_task, "crsf_task", 4096, NULL, 10, NULL);
 
     //timer to read battery percentage via ADC
-    //wert alle 10 sekunden auslesen
-    batteryTimerHandle = xTimerCreate("battery_timer", pdMS_TO_TICKS(10000), pdTRUE, (void *)0, battery_Timer_Event);
+    initBatteryRead();
+    //wert jede sekunde auslesen --> aus 10 messungen wird der mittelwert gebildet --> vermindern von rauschen
+    batteryTimerHandle = xTimerCreate("battery_timer", pdMS_TO_TICKS(1000), pdTRUE, (void *)0, battery_Timer_Event);
 
     //start the timer
     if (xTimerStart(batteryTimerHandle, 1000 / portTICK_PERIOD_MS ) != pdPASS) {
