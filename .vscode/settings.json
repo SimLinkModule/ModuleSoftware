@@ -12,6 +12,8 @@
         "console.h": "c",
         "esp_nimble_hci.h": "c",
         "stdio.h": "c",
-        "freertosconfig.h": "c"
+        "freertosconfig.h": "c",
+        "inttypes.h": "c",
+        "glue.h": "c"
     }
 }

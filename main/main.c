@@ -5,6 +5,7 @@
 #include "ssd1306.h"
 #include "ble.h"
 #include "battery.h"
+#include "button.h"
 
 //#include "freertos/projdefs.h"
 #include "freertos/FreeRTOSConfig.h"
@@ -39,6 +40,9 @@ void app_main(void)
 
     //task to read crsf uart data
     xTaskCreate(crsf_get_ChannelData_task, "crsf_task", 4096, NULL, 10, NULL);
+
+    //setup buttons
+    initButtons();
 
     /*##########################################################
     ############################################################

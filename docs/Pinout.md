@@ -6,8 +6,13 @@
 | 16  | UART-Eingang                |
 | 21  | SDA                         |
 | 22  | SCK                         |
+| 25  | rechter Button              |
+| 26  | linker Button               |
 
-**Anmerkung:** Wenn der ADC für die Ermittlung der Spannung verwendet werden soll. (Wenn ein Pin für die Batteriespannung vorhanden ist) Dann muss ein Spannungsteiler verwendet werden, welche die Maximalspannung der Batterie auf 3.3V herunterregelt. Des Weiteren muss noch die Formel in der Batteriekomponente angepasst werden. Im Testaufbau war R1 650 Ohm und R2 2000 Ohm.
+**Anmerkung:**
+
+- Wenn der ADC für die Ermittlung der Spannung verwendet werden soll. (Wenn ein Pin für die Batteriespannung vorhanden ist) Dann muss ein Spannungsteiler verwendet werden, welche die Maximalspannung der Batterie auf 3.3V herunterregelt. Des Weiteren muss noch die Formel in der Batteriekomponente angepasst werden. Im Testaufbau war R1 650 Ohm und R2 2000 Ohm.
+- Die Buttons sind jeweils mit GND verbunden. Ein interner Pullup-Widerstand im ESP zieht den Pin im Ruhezustand auf 3.3V.
 
 # OLED-Display
 | Pin | Anmerkung |

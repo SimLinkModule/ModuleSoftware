@@ -194,18 +194,24 @@ int bleGAPEevent(struct ble_gap_event *event, void *arg) {
         ESP_LOGI(tag_GAP, "PASSKEY_ACTION_EVENT started \n");
         
         struct ble_sm_io pkey = {0};
-        int key = 0;
+        BUTTON selectedButton = RIGHTBUTTON;
 
         if (event->passkey.params.action == BLE_SM_IOACT_DISP) {
             //BLE_SM_IO_CAP_DISP_ONLY option
             pkey.action = event->passkey.params.action;
-            pkey.passkey = 123456;
             
+            pkey.passkey = esp_random();
+	        /* Max value is 999999 */
+	        pkey.passkey %= 1000000;
+            
+            char pinStr[12];
+            snprintf(pinStr, 12,"%06d", (int)pkey.passkey);
+
             ssd1306_clear();
             ssd1306_setString("PIN",48,0);
-            ssd1306_setString("123456",31,18);
+            ssd1306_setString(pinStr,31,18);
             ssd1306_display();
-            //display passkey for the other side 123456
+            //display passkey for the other side
 
             rc = ble_sm_inject_io(event->passkey.conn_handle, &pkey);
             ESP_LOGI(tag_GAP, "ble_sm_inject_io result: %d\n", rc);
@@ -215,7 +221,7 @@ int bleGAPEevent(struct ble_gap_event *event, void *arg) {
             //gegenseite kann auch mit yes oder no bestätigen den pin
             //verify with buttons Yes or No --> add timeout after x seconds
             char pinStr[12];
-            snprintf(pinStr, 12,"%d", (int)event->passkey.params.numcmp);
+            snprintf(pinStr, 12,"%06d", (int)event->passkey.params.numcmp);
             ssd1306_clear();
             ssd1306_setString(pinStr,0,0);
             ssd1306_setString("ja",0,18);
@@ -223,14 +229,27 @@ int bleGAPEevent(struct ble_gap_event *event, void *arg) {
             ssd1306_display();
 
             pkey.action = event->passkey.params.action;
-            if (true) {
-                pkey.numcmp_accept = true;
+
+            clearStoredButtons();
+            if (getButton(&selectedButton)) {
+                if(selectedButton == LEFTBUTTON){
+                    ESP_LOGI(tag_GAP,"LEFT BUTTON");
+                    pkey.numcmp_accept = true;
+                } else {
+                    pkey.numcmp_accept = false;
+                }
             } else {
-                pkey.numcmp_accept = 0;
+                pkey.numcmp_accept = false;
                 ESP_LOGE(tag_GAP, "Timeout! Rejecting the key");
             }
 
+            ESP_LOGI(tag_GAP, "NUMCP_ACCEPT: %d", pkey.numcmp_accept);
             rc = ble_sm_inject_io(event->passkey.conn_handle, &pkey);
+            if(rc != 0){
+                //https://github.com/espressif/esp-idf/issues/8555#issuecomment-1066591071
+                // 0x05 = Authentication Failure error code
+                ble_gap_terminate(conn_handle, 0x05);
+            }
             ESP_LOGI(tag_GAP, "ble_sm_inject_io result: %d\n", rc);
         }
         return 0;

@@ -1,7 +1,6 @@
-- buttons hinzufügen
 - LEDs hinzufügen
-- BLE Verbindung mit ausgabe von einem PIN und ja nein antworten hinzufügen --> gap.c 212
 
+- includes, variablen und funktionen durchschauen, wo die liegen müssen und ob sie static, extern oder so sein müssen
 - kommentieren und in .md-Datein dokumentieren, wo was zu finden ist
 
 - Bei einem erneuten verbindungsaufbau wird das gestoppte updaten der daten nicht wieder gestartet
