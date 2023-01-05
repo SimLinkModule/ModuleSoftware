@@ -75,5 +75,6 @@ void ssd1306_display();
 void ssd1306_setPixel(uint8_t x, uint8_t y, bool status);
 void ssd1306_setChar(char c, uint8_t x, uint8_t y);
 void ssd1306_setString(const char* str, uint8_t x, uint8_t y);
+void ssd1306_setConnectedImage();
 
 #endif

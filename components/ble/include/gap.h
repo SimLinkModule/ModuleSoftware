@@ -4,7 +4,6 @@
 #include <string.h>
 
 #include "host/ble_hs.h"
-#include "esp_peripheral.h"
 
 #include "esp_log.h"
 

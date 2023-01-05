@@ -48,7 +48,8 @@ void initBLE(){
     //BLE_SM_IO_CAP_KEYBOARD_ONLY = Keyboard only
     //BLE_SM_IO_CAP_NO_IO = just work
     //BLE_SM_IO_CAP_KEYBOARD_DISP = Keyboard and display
-    ble_hs_cfg.sm_io_cap = BLE_SM_IO_CAP_NO_IO;
+    //BLE_SM_IO_CAP_KEYBOARD_ONLY && BLE_SM_IO_CAP_KEYBOARD_DISP not implemented
+    ble_hs_cfg.sm_io_cap = BLE_SM_IO_CAP_DISP_YES_NO;
     /*Security Manager secure connections flag
     if set proper flag in pairing request/response will be set. this results in using LE Secure Connections for pairing if also supported by remote device. Fallback to legacy pairing if not supported by remote.*/
     ble_hs_cfg.sm_sc = 1;

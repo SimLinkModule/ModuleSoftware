@@ -92,7 +92,6 @@ int bleGAPEevent(struct ble_gap_event *event, void *arg) {
             ssd1306_clear();
             ssd1306_display();
 
-
             struct ble_gap_upd_params connectionParameters = {
                 //itvl: These determine how often the devices will "ping-pong" each other and also when they will send any data required. So if you set the value to something like 20, that would mean packets are sent every 25ms, which will obviously consume more power than say a value of 80 (100ms). The reason for the min max values is so the devices can negotiate a compromise for the best possible communication, you can set these to the same value if you prefer.
                 .itvl_min = (int)(11.25/1.25), //1.25ms units; laut apple 11.25 minimum fuer hid
@@ -167,6 +166,10 @@ int bleGAPEevent(struct ble_gap_event *event, void *arg) {
     case BLE_GAP_EVENT_ENC_CHANGE:
         ESP_LOGI(tag_GAP, "encryption change event; status=%d ",
                     event->enc_change.status);
+        if(event->enc_change.status == 0){
+            ssd1306_setConnectedImage();
+            ssd1306_display();
+        }
         break;
     case BLE_GAP_EVENT_REPEAT_PAIRING:
         /* We already have a bond with the peer, but it is attempting to
@@ -187,46 +190,46 @@ int bleGAPEevent(struct ble_gap_event *event, void *arg) {
         break;
 
     case BLE_GAP_EVENT_PASSKEY_ACTION:
+        //https://community.nxp.com/t5/Wireless-Connectivity-Knowledge/KW36-Enabling-Out-Of-Band-Pairing-on-a-Bluetooth-LE-Central-and/tac-p/1238698
         ESP_LOGI(tag_GAP, "PASSKEY_ACTION_EVENT started \n");
         
         struct ble_sm_io pkey = {0};
         int key = 0;
 
         if (event->passkey.params.action == BLE_SM_IOACT_DISP) {
+            //BLE_SM_IO_CAP_DISP_ONLY option
             pkey.action = event->passkey.params.action;
-            pkey.passkey = 123456; // This is the passkey to be entered on peer
-            ESP_LOGI(tag_GAP, "Enter passkey %d on the peer side", (int)pkey.passkey);
+            pkey.passkey = 123456;
+            
+            ssd1306_clear();
+            ssd1306_setString("PIN",48,0);
+            ssd1306_setString("123456",31,18);
+            ssd1306_display();
+            //display passkey for the other side 123456
+
             rc = ble_sm_inject_io(event->passkey.conn_handle, &pkey);
             ESP_LOGI(tag_GAP, "ble_sm_inject_io result: %d\n", rc);
         } else if (event->passkey.params.action == BLE_SM_IOACT_NUMCMP) {
-            ESP_LOGI(tag_GAP, "Passkey on device's display: %d", (int)event->passkey.params.numcmp);
-            ESP_LOGI(tag_GAP, "Accept or reject the passkey through console in this format -> key Y or key N");
+            //BLE_SM_IO_CAP_DISP_YES_NO option
+
+            //gegenseite kann auch mit yes oder no bestätigen den pin
+            //verify with buttons Yes or No --> add timeout after x seconds
+            char pinStr[12];
+            snprintf(pinStr, 12,"%d", (int)event->passkey.params.numcmp);
+            ssd1306_clear();
+            ssd1306_setString(pinStr,0,0);
+            ssd1306_setString("ja",0,18);
+            ssd1306_setString("nein",128-43,18);
+            ssd1306_display();
+
             pkey.action = event->passkey.params.action;
-            if (scli_receive_key(&key)) {
-                pkey.numcmp_accept = key;
+            if (true) {
+                pkey.numcmp_accept = true;
             } else {
                 pkey.numcmp_accept = 0;
                 ESP_LOGE(tag_GAP, "Timeout! Rejecting the key");
             }
-            rc = ble_sm_inject_io(event->passkey.conn_handle, &pkey);
-            ESP_LOGI(tag_GAP, "ble_sm_inject_io result: %d\n", rc);
-        } else if (event->passkey.params.action == BLE_SM_IOACT_OOB) {
-            static uint8_t tem_oob[16] = {0};
-            pkey.action = event->passkey.params.action;
-            for (int i = 0; i < 16; i++) {
-                pkey.oob[i] = tem_oob[i];
-            }
-            rc = ble_sm_inject_io(event->passkey.conn_handle, &pkey);
-            ESP_LOGI(tag_GAP, "ble_sm_inject_io result: %d\n", rc);
-        } else if (event->passkey.params.action == BLE_SM_IOACT_INPUT) {
-            ESP_LOGI(tag_GAP, "Enter the passkey through console in this format-> key 123456");
-            pkey.action = event->passkey.params.action;
-            if (scli_receive_key(&key)) {
-                pkey.passkey = key;
-            } else {
-                pkey.passkey = 0;
-                ESP_LOGE(tag_GAP, "Timeout! Passing 0 as the key");
-            }
+
             rc = ble_sm_inject_io(event->passkey.conn_handle, &pkey);
             ESP_LOGI(tag_GAP, "ble_sm_inject_io result: %d\n", rc);
         }
@@ -234,6 +237,10 @@ int bleGAPEevent(struct ble_gap_event *event, void *arg) {
     case BLE_GAP_EVENT_NOTIFY_TX:
         //Represents a transmitted ATT notification or indication, or a
         //completed indication transaction.
+        return 0;
+    case BLE_GAP_EVENT_IDENTITY_RESOLVED:
+        ssd1306_setConnectedImage();
+        ssd1306_display();
         return 0;
     default:
         ESP_LOGI(tag_GAP, "GAP EVENT ID: %d\n",event->type);

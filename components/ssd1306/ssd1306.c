@@ -1,5 +1,6 @@
 #include "ssd1306.h"
 #include "ssd1306_font.h"
+#include "ssd1306_images.h"
 
 void ssd1306_init(){
 
@@ -77,6 +78,7 @@ void ssd1306_init(){
 
     //buffer erstellen
     // jede page hat 128 segmenente mit jeweils 8 Bit. Für höhe von 32 Pixel werden 4 Pages benötigt
+    // ssd1780-datasheet seite 37&38
     ssd1306_buffer = (uint8_t *)malloc(SSD1306_WIDTH * (SSD1306_HEIGHT / 8));
     ssd1306_clear();
     ssd1306_display();
@@ -190,4 +192,8 @@ void ssd1306_setString(const char* str, uint8_t x, uint8_t y) {
         ssd1306_setChar(*str++, x, y);
         x += CHAR_WIDTH+1;
     }
+}
+
+void ssd1306_setConnectedImage(){
+    memcpy(ssd1306_buffer,connectedImage,SSD1306_WIDTH * (SSD1306_HEIGHT / 8));
 }
