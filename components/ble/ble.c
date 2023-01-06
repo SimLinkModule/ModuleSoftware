@@ -73,6 +73,10 @@ void initBLE(){
     rc = ble_svc_gap_device_name_set(CONFIG_BT_NIMBLE_SVC_GAP_DEVICE_NAME);
     assert(rc == 0);
 
+    //set the appearance of the device
+    //0x03c3 = joystick; 0x03c4 = gamepad
+    ble_svc_gap_device_appearance_set(0x03C4);
+
     //https://github.com/espressif/esp-nimble/issues/33
     //KEINE AHNUNG WAS DAS MACHT ABER DADURCH KANN SICH DER ESP NACH EINEN NEUSTART WIEDER MIT DEM GERÄT VERBINDEN
     /* XXX Need to have template for store */

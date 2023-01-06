@@ -46,6 +46,9 @@ void bleAdvertise(void){
     fields.name_len = strlen(CONFIG_BT_NIMBLE_SVC_GAP_DEVICE_NAME);
     fields.name_is_complete = 1;
 
+    fields.appearance = ble_svc_gap_device_appearance();
+    fields.appearance_is_present = 1;
+
     fields.num_uuids16 = 1;
     fields.uuids16_is_complete = 0;
     fields.uuids16 = (ble_uuid16_t[]){

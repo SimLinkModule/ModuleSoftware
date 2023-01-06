@@ -91,3 +91,6 @@ Auf dieser [Website](https://eleccelerator.com/usbdescreqparser/) umwandeln.
 
 #### Liste von Diensten
 `svcs`
+
+## Hinweis:
+- Debugging des XBox controllers hat nur verbunden, wenn man ihn nicht in den Bluetooth-Einstellungen verbunden hatte und wenn mann ihn erst connecting modus bringt wenn man gatttools offen hat und danach connect aufruft.
