@@ -23,9 +23,6 @@ void app_main(void)
     I2C_master_init();
     ssd1306_init();
 
-    //init uart for crsf
-    initCRSF_read();
-
     //welcome screen
     ssd1306_setString("Welcome",25,9);
     ssd1306_display();
@@ -37,6 +34,9 @@ void app_main(void)
 
     /* Start ble task */
     nimble_port_freertos_init(bleHostTask);
+
+    //init uart for crsf
+    initCRSF_read();
 
     //task to read crsf uart data
     xTaskCreate(crsf_get_ChannelData_task, "crsf_task", 4096, NULL, 10, NULL);
