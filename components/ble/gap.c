@@ -172,6 +172,7 @@ int bleGAPEevent(struct ble_gap_event *event, void *arg) {
         }
         break;
     case BLE_GAP_EVENT_REPEAT_PAIRING:
+        //https://ubuntu.com/core/docs/bluez/reference/pairing/introduction
         /* We already have a bond with the peer, but it is attempting to
          * establish a new secure link.  This app sacrifices security for
          * convenience: just throw away the old bond and accept the new link.
