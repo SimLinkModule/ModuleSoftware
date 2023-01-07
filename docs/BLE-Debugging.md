@@ -9,6 +9,13 @@
 # Linux
 - Tools: hcitool, gatttool, bluetoothctl, hidraw-dump, Bluepy
 
+## Allgemein
+Edit `/lib/systemd/system/bluetooth.service` and change to:
+
+`ExecStart=/usr/libexec/bluetooth/bluetoothd --noplugin=input,hog`
+
+Then Bluetooth daemon won't grab input or hog devices and won't create system input nodes. Then the HID GATT service and corresponding characteristics are available via BlueZ to application.
+
 ## hcitool
 
 ### Verfügbares Bluetoothgerät am Linuxrechner
@@ -93,4 +100,4 @@ Auf dieser [Website](https://eleccelerator.com/usbdescreqparser/) umwandeln.
 `svcs`
 
 ## Hinweis:
-- Debugging des XBox controllers hat nur verbunden, wenn man ihn nicht in den Bluetooth-Einstellungen verbunden hatte und wenn mann ihn erst connecting modus bringt wenn man gatttools offen hat und danach connect aufruft.
+- Debugging des XBox controllers hat nur verbunden, wenn man ihn nicht in den Bluetooth-Einstellungen verbunden hatte und wenn mann ihn erst connecting modus bringt wenn man gatttools offen hat und danach connect aufruft. Beim gatttool darf auch nicht die Option random aktiviert sein.

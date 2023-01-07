@@ -34,7 +34,7 @@
 /*hid information infos*/
 #define HID_FLAGS_REMOTE_WAKE           0x01      // RemoteWake
 #define HID_FLAGS_NORMALLY_CONNECTABLE  0x02      // NormallyConnectable
-#define HID_KBD_FLAGS                   HID_FLAGS_REMOTE_WAKE
+#define HID_KBD_FLAGS                   HID_FLAGS_REMOTE_WAKE | HID_FLAGS_NORMALLY_CONNECTABLE
 #define HID_INFORMATION_LEN             4         // HID Information
 
 static int gatt_svr_chr_access_device_info(uint16_t conn_handle, uint16_t attr_handle, struct ble_gatt_access_ctxt *ctxt, void *arg);
@@ -52,7 +52,7 @@ static const char *firmware_rev = "1.0";
 static const char *software_rev = "1.0";
 
 static const uint8_t hidInfo[HID_INFORMATION_LEN] = {
-    0x11, 0x01,                                       // bcdHID (USB HID version) --> Version 1.11
+    0x01, 0x01,                                       // bcdHID (USB HID version) --> Version 1.01
     0x00,                                             // bCountryCode
     HID_KBD_FLAGS                                     // Flags
 };
@@ -108,22 +108,22 @@ static const struct ble_gatt_svc_def gatt_svr_svcs[] = {
                 /* Characteristic: Manufacturer name */
                 .uuid = BLE_UUID16_DECLARE(GATT_MANUFACTURER_NAME_UUID),
                 .access_cb = gatt_svr_chr_access_device_info,
-                .flags = BLE_GATT_CHR_F_READ,
+                .flags = BLE_GATT_CHR_F_READ | BLE_GATT_CHR_F_READ_ENC,
             }, {
                 /* Characteristic: Model number string */
                 .uuid = BLE_UUID16_DECLARE(GATT_MODEL_NUMBER_UUID),
                 .access_cb = gatt_svr_chr_access_device_info,
-                .flags = BLE_GATT_CHR_F_READ,
+                .flags = BLE_GATT_CHR_F_READ | BLE_GATT_CHR_F_READ_ENC,
             }, {
                 /* Characteristic: Firmware Revision string */
                 .uuid = BLE_UUID16_DECLARE(GATT_FIRMWARE_REVISION_UUID),
                 .access_cb = gatt_svr_chr_access_device_info,
-                .flags = BLE_GATT_CHR_F_READ,
+                .flags = BLE_GATT_CHR_F_READ | BLE_GATT_CHR_F_READ_ENC,
             }, {
                 /* Characteristic: Software Revision string */
                 .uuid = BLE_UUID16_DECLARE(GATT_SOFTWARE_REVISION_UUID),
                 .access_cb = gatt_svr_chr_access_device_info,
-                .flags = BLE_GATT_CHR_F_READ,
+                .flags = BLE_GATT_CHR_F_READ | BLE_GATT_CHR_F_READ_ENC,
             }, {
                 0, /* No more characteristics in this service */
             },
@@ -140,7 +140,7 @@ static const struct ble_gatt_svc_def gatt_svr_svcs[] = {
                 .uuid = BLE_UUID16_DECLARE(GATT_BATTERY_LEVEL_UUID),
                 .access_cb = gatt_svr_chr_access_device_info,
                 .val_handle = &battery_status_handle,
-                .flags = BLE_GATT_CHR_F_READ | BLE_GATT_CHR_F_NOTIFY,
+                .flags = BLE_GATT_CHR_F_READ | BLE_GATT_CHR_F_READ_ENC | BLE_GATT_CHR_F_NOTIFY,
             }, {
                 0, /* No more characteristics in this service */
             },
@@ -156,12 +156,12 @@ static const struct ble_gatt_svc_def gatt_svr_svcs[] = {
                 /* Characteristic: Report Map */
                 .uuid = BLE_UUID16_DECLARE(GATT_HID_REPORT_MAP_UUID),
                 .access_cb = gatt_svr_chr_hid,
-                .flags = BLE_GATT_CHR_F_READ,
+                .flags = BLE_GATT_CHR_F_READ | BLE_GATT_CHR_F_READ_ENC,
             }, {
                 /* Characteristic: HID Information */
                 .uuid = BLE_UUID16_DECLARE(GATT_HID_INFORMATION_UUID),
                 .access_cb = gatt_svr_chr_hid,
-                .flags = BLE_GATT_CHR_F_READ,
+                .flags = BLE_GATT_CHR_F_READ | BLE_GATT_CHR_F_READ_ENC,
             }, {
                 /* Characteristic: HID Control Point */
                 .uuid = BLE_UUID16_DECLARE(GATT_HID_CONTROL_POINT_UUID),
@@ -172,7 +172,7 @@ static const struct ble_gatt_svc_def gatt_svr_svcs[] = {
                 .uuid = BLE_UUID16_DECLARE(GATT_HID_REPORT_UUID),
                 .access_cb = gatt_svr_chr_hid,
                 .val_handle = &report_data_handle,
-                .flags = BLE_GATT_CHR_F_READ | BLE_GATT_CHR_F_NOTIFY,
+                .flags = BLE_GATT_CHR_F_READ | BLE_GATT_CHR_F_READ_ENC | BLE_GATT_CHR_F_NOTIFY,
                 .descriptors = (struct ble_gatt_dsc_def[]){
                     //client configuration descriptor soll nicht manuell hinzugefügt werden, da dieser mittels dem flag notify automatisch hinzugefügt wird
                     {   
