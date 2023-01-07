@@ -1,5 +1,29 @@
 #include "ble.h"
 
+#include "esp_log.h"
+#include "nvs_flash.h"
+
+#include "gap.h"
+#include "gatt.h"
+
+#include "nimble/nimble_port.h"
+#include "esp_nimble_hci.h"
+#include "host/ble_hs.h"
+#include "services/gap/ble_svc_gap.h"
+#include "host/ble_hs_pvcy.h"
+#include "host/util/util.h"
+#include "nimble/nimble_port_freertos.h"
+
+static void bleOnSync(void);
+static void bleOnReset(int reason);
+
+/* Define template prototype for store*/
+//located in nimble/host/store/config/src/ble_store_config.c
+//never definded in a .h file
+void ble_store_config_init(void);
+
+static const char *tag_BLE = "SimLinkModule_BLE";
+
 uint8_t bleAddressType = BLE_ADDR_RANDOM;
 
 void initBLE(){
@@ -84,8 +108,8 @@ void initBLE(){
 }
 
 //This callback is executed when the host and controller become synced. This happens at startup and after a reset
-void bleOnSync(void){
-    int rc;
+static void bleOnSync(void){
+    //int rc;
 
     //rpa = resolvable private address; Address randomly generated from an identity address and an identity resolving key (IRK).
     ble_hs_pvcy_rpa_config(1);
@@ -117,7 +141,7 @@ void bleOnSync(void){
 }
 
 //This callback is executed when the host resets itself and the controller
-void bleOnReset(int reason){
+static void bleOnReset(int reason){
     ESP_LOGI(tag_BLE, "Resetting state; reason=%d\n", reason);
 }
 

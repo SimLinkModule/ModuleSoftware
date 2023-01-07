@@ -1,5 +1,48 @@
 #include "gatt.h"
 
+#include "services/gatt/ble_svc_gatt.h"
+#include "services/gap/ble_svc_gap.h"
+
+#include "esp_log.h"
+
+#include "crsf.h"
+#include "gap.h"
+#include "battery.h"
+
+/* device info configuration */
+#define GATT_DEVICE_INFO_UUID                   0x180A
+#define GATT_MANUFACTURER_NAME_UUID             0x2A29
+#define GATT_MODEL_NUMBER_UUID                  0x2A24
+#define GATT_FIRMWARE_REVISION_UUID             0x2A26
+#define GATT_SOFTWARE_REVISION_UUID             0x2A28
+#define GATT_PNP_ID_UUID                        0x2A50
+
+/* battery configuration */
+#define GATT_BATTERYS_UUID                      0x180f
+#define GATT_BATTERY_LEVEL_UUID                 0x2a19
+
+/* hid configuration */
+#define GATT_HIDS_UUID                          0x1812
+#define GATT_HID_REPORT_MAP_UUID                0x2A4B
+#define GATT_HID_INFORMATION_UUID               0x2A4A
+#define GATT_HID_CONTROL_POINT_UUID             0x2A4C
+#define GATT_HID_REPORT_UUID                    0x2A4D
+
+/*hid report configuration*/
+#define GATT_REPORT_REFERENCE_CHAR_UUID         0x2908
+
+/*hid information infos*/
+#define HID_FLAGS_REMOTE_WAKE           0x01      // RemoteWake
+#define HID_FLAGS_NORMALLY_CONNECTABLE  0x02      // NormallyConnectable
+#define HID_KBD_FLAGS                   HID_FLAGS_REMOTE_WAKE
+#define HID_INFORMATION_LEN             4         // HID Information
+
+static int gatt_svr_chr_access_device_info(uint16_t conn_handle, uint16_t attr_handle, struct ble_gatt_access_ctxt *ctxt, void *arg);
+static int gatt_svr_chr_hid(uint16_t conn_handle, uint16_t attr_handle, struct ble_gatt_access_ctxt *ctxt, void *arg);
+static int report_descriptor_callback(uint16_t conn_handle, uint16_t attr_handle, struct ble_gatt_access_ctxt *ctxt, void *arg);
+
+static const char *tag_GATT = "SimLinkModule_GATT";
+
 uint16_t report_data_handle;
 uint16_t battery_status_handle;
 
@@ -151,7 +194,7 @@ static const struct ble_gatt_svc_def gatt_svr_svcs[] = {
     },
 };
 
-int gatt_svr_chr_access_device_info(uint16_t conn_handle, uint16_t attr_handle, struct ble_gatt_access_ctxt *ctxt, void *arg) {
+static int gatt_svr_chr_access_device_info(uint16_t conn_handle, uint16_t attr_handle, struct ble_gatt_access_ctxt *ctxt, void *arg) {
     uint16_t uuid;
     int rc;
 
@@ -180,6 +223,61 @@ int gatt_svr_chr_access_device_info(uint16_t conn_handle, uint16_t attr_handle, 
     if (uuid == GATT_BATTERY_LEVEL_UUID) {
         int percentage = batteryPercentage;
         rc = os_mbuf_append(ctxt->om, &percentage, sizeof(percentage));
+        return rc == 0 ? 0 : BLE_ATT_ERR_INSUFFICIENT_RES;
+    }
+
+    assert(0);
+    return BLE_ATT_ERR_UNLIKELY;
+}
+
+static int gatt_svr_chr_hid(uint16_t conn_handle, uint16_t attr_handle, struct ble_gatt_access_ctxt *ctxt, void *arg) {
+    uint16_t uuid;
+    int rc;
+
+    uuid = ble_uuid_u16(ctxt->chr->uuid);
+
+    if (uuid == GATT_HID_REPORT_MAP_UUID) {
+        rc = os_mbuf_append(ctxt->om, hidReportMap, sizeof(hidReportMap)/sizeof(hidReportMap[0]));
+        return rc == 0 ? 0 : BLE_ATT_ERR_INSUFFICIENT_RES;
+    }
+
+    if (uuid == GATT_HID_INFORMATION_UUID) {
+        rc = os_mbuf_append(ctxt->om, hidInfo, sizeof(hidInfo)/sizeof(hidInfo[0]));
+        return rc == 0 ? 0 : BLE_ATT_ERR_INSUFFICIENT_RES;
+    }
+
+    if (uuid == GATT_HID_CONTROL_POINT_UUID) {
+            int *test = OS_MBUF_DATA(ctxt->om,int *);
+            //00 == hid host is entering the suspend state
+            //01 == hid host is exiting the suspend state
+            //nur das erste bit betrachten
+            //unter ios wird der suspend state schon geändert wenn man das gerät nur umdreht und das display noch nicht eingeschalten hat :)
+            int wakeupInfo = *test & 0b11;
+            notify_state_report_data = wakeupInfo;
+            notify_state_battery_status = wakeupInfo;
+            ESP_LOGW(tag_GATT, "WRITE TO CONTROL POINT %d",wakeupInfo);
+			return 0;
+    }
+
+    //Daten des reports übermitteln
+    if (uuid == GATT_HID_REPORT_UUID) {
+            rc = os_mbuf_append(ctxt->om, &channelData, sizeof(channelData));
+            return rc == 0 ? 0 : BLE_ATT_ERR_INSUFFICIENT_RES;
+    }
+
+    assert(0);
+    return BLE_ATT_ERR_UNLIKELY;
+}
+
+static int report_descriptor_callback(uint16_t conn_handle, uint16_t attr_handle, struct ble_gatt_access_ctxt *ctxt, void *arg) {
+    uint16_t uuid;
+    int rc;
+
+    uuid = ble_uuid_u16(ctxt->chr->uuid);
+
+    if (uuid == GATT_REPORT_REFERENCE_CHAR_UUID) {
+        //report id soll ungleich 0 sein, wenn es mehr als einen reportmerkmal gibt für einen bestimmten typen
+        rc = os_mbuf_append(ctxt->om, reportReferenceChar, sizeof(reportReferenceChar)/sizeof(reportReferenceChar[0]));
         return rc == 0 ? 0 : BLE_ATT_ERR_INSUFFICIENT_RES;
     }
 
@@ -245,59 +343,4 @@ int gattSvrInit(void) {
     }
 
     return 0;
-}
-
-int gatt_svr_chr_hid(uint16_t conn_handle, uint16_t attr_handle, struct ble_gatt_access_ctxt *ctxt, void *arg) {
-    uint16_t uuid;
-    int rc;
-
-    uuid = ble_uuid_u16(ctxt->chr->uuid);
-
-    if (uuid == GATT_HID_REPORT_MAP_UUID) {
-        rc = os_mbuf_append(ctxt->om, hidReportMap, sizeof(hidReportMap)/sizeof(hidReportMap[0]));
-        return rc == 0 ? 0 : BLE_ATT_ERR_INSUFFICIENT_RES;
-    }
-
-    if (uuid == GATT_HID_INFORMATION_UUID) {
-        rc = os_mbuf_append(ctxt->om, hidInfo, sizeof(hidInfo)/sizeof(hidInfo[0]));
-        return rc == 0 ? 0 : BLE_ATT_ERR_INSUFFICIENT_RES;
-    }
-
-    if (uuid == GATT_HID_CONTROL_POINT_UUID) {
-            int *test = OS_MBUF_DATA(ctxt->om,int *);
-            //00 == hid host is entering the suspend state
-            //01 == hid host is exiting the suspend state
-            //nur das erste bit betrachten
-            //unter ios wird der suspend state schon geändert wenn man das gerät nur umdreht und das display noch nicht eingeschalten hat :)
-            int wakeupInfo = *test & 0b11;
-            notify_state_report_data = wakeupInfo;
-            notify_state_battery_status = wakeupInfo;
-            ESP_LOGW(tag_GATT, "WRITE TO CONTROL POINT %d",wakeupInfo);
-			return 0;
-    }
-
-    //Daten des reports übermitteln
-    if (uuid == GATT_HID_REPORT_UUID) {
-            rc = os_mbuf_append(ctxt->om, &channelData, sizeof(channelData));
-            return rc == 0 ? 0 : BLE_ATT_ERR_INSUFFICIENT_RES;
-    }
-
-    assert(0);
-    return BLE_ATT_ERR_UNLIKELY;
-}
-
-int report_descriptor_callback(uint16_t conn_handle, uint16_t attr_handle, struct ble_gatt_access_ctxt *ctxt, void *arg) {
-    uint16_t uuid;
-    int rc;
-
-    uuid = ble_uuid_u16(ctxt->chr->uuid);
-
-    if (uuid == GATT_REPORT_REFERENCE_CHAR_UUID) {
-        //report id soll ungleich 0 sein, wenn es mehr als einen reportmerkmal gibt für einen bestimmten typen
-        rc = os_mbuf_append(ctxt->om, reportReferenceChar, sizeof(reportReferenceChar)/sizeof(reportReferenceChar[0]));
-        return rc == 0 ? 0 : BLE_ATT_ERR_INSUFFICIENT_RES;
-    }
-
-    assert(0);
-    return BLE_ATT_ERR_UNLIKELY;
 }

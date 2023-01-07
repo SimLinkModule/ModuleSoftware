@@ -1,5 +1,15 @@
 #include "battery.h"
 
+#include "esp_adc/adc_oneshot.h"
+#include "esp_adc/adc_cali.h"
+#include "esp_adc/adc_cali_scheme.h"
+
+#include "host/ble_gatt.h"
+#include "esp_log.h"
+
+#include "gatt.h"
+#include "gap.h"
+
 static const char *tag_BAT = "SimLinkModule_BAT";
 
 uint8_t batteryPercentage = 0;
@@ -10,9 +20,12 @@ static bool adc_calibrated = false;
 static int measurementCount = 0;
 static int sumVoltage = 0; //Voltage in mV
 
+static bool adc_calibration(adc_unit_t unit, adc_atten_t atten, adc_cali_handle_t *out_handle);
+static int32_t getVoltage();
+
 
 //determine the esp ADC reference voltage which is around 1100 mV
-bool adc_calibration(adc_unit_t unit, adc_atten_t atten, adc_cali_handle_t *return_handle){
+static bool adc_calibration(adc_unit_t unit, adc_atten_t atten, adc_cali_handle_t *return_handle){
     adc_cali_handle_t handle = NULL;
     esp_err_t ret = ESP_FAIL;
     bool returnValue = false;
@@ -58,7 +71,7 @@ void initBatteryRead(){
 }
 
 //Voltage in mV
-int32_t getVoltage(){
+static int32_t getVoltage(){
     int raw_val, voltage;
     adc_oneshot_read(adc_handle, ADC_CHANNEL_4, &raw_val);
     if(adc_calibrated){
@@ -74,9 +87,6 @@ int32_t getVoltage(){
 
 void battery_Timer_Event(TimerHandle_t ev){
     //https://esp32.com/viewtopic.php?t=1459
-    
-    struct os_mbuf *om;
-    int rc;
 
     getVoltage();
     if(measurementCount < 10){
@@ -101,9 +111,11 @@ void battery_Timer_Event(TimerHandle_t ev){
 
         if(newPercentage != batteryPercentage){
             if(notify_state_battery_status){
+                struct os_mbuf *om;
+
                 om = ble_hs_mbuf_from_flat(&batteryPercentage, sizeof(batteryPercentage));
                 //Deprecated. Should not be used. Use ble_gatts_notify_custom instead.
-                rc = ble_gattc_notify_custom(conn_handle, battery_status_handle, om);
+                ble_gattc_notify_custom(conn_handle, battery_status_handle, om);
             }
             newPercentage = batteryPercentage;
         }

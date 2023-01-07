@@ -11,8 +11,9 @@
 #include "freertos/FreeRTOSConfig.h"
 #include "freertos/timers.h"
 #include "freertos/task.h"
+#include "nimble/nimble_port_freertos.h"
 
-static TimerHandle_t batteryTimerHandle;
+//static TimerHandle_t batteryTimerHandle;
 
 void app_main(void)
 {

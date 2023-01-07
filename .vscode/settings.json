@@ -14,6 +14,10 @@
         "stdio.h": "c",
         "freertosconfig.h": "c",
         "inttypes.h": "c",
-        "glue.h": "c"
+        "glue.h": "c",
+        "adc_cali_scheme.h": "c",
+        "timers.h": "c",
+        "adc_oneshot.h": "c",
+        "ble_svc_gatt.h": "c"
     }
 }

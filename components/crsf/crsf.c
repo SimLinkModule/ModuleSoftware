@@ -1,8 +1,24 @@
 #include "crsf.h"
 
+#include "hal/uart_hal.h"
+#include "driver/uart.h"
+#include "freertos/task.h"
+#include "esp_log.h"
+#include <stdbool.h>
+#include "host/ble_hs.h"
+
+#include "gap.h"
+#include "gatt.h"
+#include "host/ble_gatt.h"
+
+static uint8_t crcSingleChar(uint8_t crc, uint8_t a);
+static uint8_t crcMessage(uint8_t message[], uint8_t length);
+static uint16_t scale_Range_Analog(uint16_t value);
+static uint8_t scale_Range_Digital(uint16_t value);
+
 ChannelDataStruct channelData = {0};
 
-uint8_t crcSingleChar(uint8_t crc, uint8_t a)
+static uint8_t crcSingleChar(uint8_t crc, uint8_t a)
 {
     crc ^= a;
     //zeichen wird acht mal nach links geschoben und jedes mal geschaut ob höchste stelle eine 1 ist, wenn dann polynom xor --> klassisches crc rechnen
@@ -13,7 +29,7 @@ uint8_t crcSingleChar(uint8_t crc, uint8_t a)
 }
 
 //get crc from message
-uint8_t crcMessage(uint8_t message[], uint8_t length)
+static uint8_t crcMessage(uint8_t message[], uint8_t length)
 {
     uint8_t crc = 0;
     for (int i = 0; i < length; i++) {
@@ -23,12 +39,12 @@ uint8_t crcMessage(uint8_t message[], uint8_t length)
 }
 
 //scale from range [173,1811] to range [0,2047]
-uint16_t scale_Range_Analog(uint16_t value){
+static uint16_t scale_Range_Analog(uint16_t value){
     return (uint16_t)((value-173)*1.25);
 }
 
 //scale from range [173,1811] to range [0,1]
-uint8_t scale_Range_Digital(uint16_t value){
+static uint8_t scale_Range_Digital(uint16_t value){
     if(value <= 992){
         return 0;
     } else {
@@ -222,16 +238,13 @@ void crsf_get_ChannelData_task(void *arg)
                                 //Kanaldaten ausgeben
                                 //wenn esp_logi ausgegeben wird dann kann es sein das watchdog timer für den task nicht zurückgesetzt wird ist aber nicht so schlimm solang der output einfach weggelassen wird in stpäteren code
                                 if(changed){
-                                    int rc;
-                                    struct os_mbuf *om;
-
                                     if(notify_state_report_data){
+                                        struct os_mbuf *om;
+
                                         //dann passt die größe vom paket zu den report deskriptor wenn 17 fesst vorprogrammiert ist --> sizeof(channelData) gibt 18
                                         om = ble_hs_mbuf_from_flat(&channelData, 17);
                                         //Deprecated. Should not be used. Use ble_gatts_notify_custom instead.
-                                        rc = ble_gattc_notify_custom(conn_handle, report_data_handle, om);
-
-                                        //assert(rc == 0);
+                                        ble_gattc_notify_custom(conn_handle, report_data_handle, om);
                                     }
                                 }
                                 //ESP_LOGI("Channel-Data","%4d %4d %4d %4d %4d %4d %4d %4d %4d %4d %4d %4d %4d %4d %4d %4d", channelData.throttle, channelData.yaw, channelData.pitch, channelData.roll, channelData.aux1, channelData.aux2, channelData.aux3, channelData.aux4, (channelData.buttons & (0x01<<0)), (channelData.buttons & (0x01<<1)), (channelData.buttons & (0x01<<2)), (channelData.buttons & (0x01<<3)), (channelData.buttons & (0x01<<4)), (channelData.buttons & (0x01<<5)), (channelData.buttons & (0x01<<6)), (channelData.buttons & (0x01<<7)));
