@@ -1,6 +1,11 @@
 #ifndef SSD1306_FONT_H
 #define SSD1306_FONT_H
 
+//font: VCR OSD Mono by Riciery Leal
+//font is free even for commercial purposes.
+//https://www.dafont.com/font-comment.php?file=vcr_osd_mono
+//https://www.dafont.com/de/vcr-osd-mono.font
+
 #define CHAR_WIDTH  10
 #define CHAR_HEIGHT 14
 
