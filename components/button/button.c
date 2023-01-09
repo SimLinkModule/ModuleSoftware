@@ -30,6 +30,11 @@ void initButtons(){
     gpio_set_pull_mode(GPIO_NUM_25,GPIO_PULLUP_ONLY);
 }
 
+/**
+ * Interrupt Service Routine for the buttons
+ * 
+ * @param arg       enum of the pressedbutton
+ */
 static void IRAM_ATTR buttonISRHandler(void* arg)
 {
     BUTTON pressedButton = (BUTTON) arg;

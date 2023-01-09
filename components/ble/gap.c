@@ -35,6 +35,7 @@ void bleAdvertise(void){
     struct ble_gap_adv_params adv_params;
     struct ble_hs_adv_fields fields;
     int rc;
+    const char* name;
 
     /*
      *  Set the advertisement data included in our advertisements:
@@ -60,8 +61,9 @@ void bleAdvertise(void){
     fields.tx_pwr_lvl_is_present = 1;
     fields.tx_pwr_lvl = BLE_HS_ADV_TX_PWR_LVL_AUTO;
 
-    fields.name = (uint8_t *)CONFIG_BT_NIMBLE_SVC_GAP_DEVICE_NAME;
-    fields.name_len = strlen(CONFIG_BT_NIMBLE_SVC_GAP_DEVICE_NAME);
+    name = ble_svc_gap_device_name();
+    fields.name = (uint8_t *)name;
+    fields.name_len = strlen(name);
     fields.name_is_complete = 1;
 
     fields.appearance = ble_svc_gap_device_appearance();

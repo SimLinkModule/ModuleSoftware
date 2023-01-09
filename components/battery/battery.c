@@ -18,13 +18,15 @@ static adc_oneshot_unit_handle_t adc_handle;
 static adc_cali_handle_t adc_cal_handle = NULL;
 static bool adc_calibrated = false;
 static int measurementCount = 0;
-static int sumVoltage = 0; //Voltage in mV
+static int sumVoltage = 0; //voltage in mV
 
 static bool adc_calibration(adc_unit_t unit, adc_atten_t atten, adc_cali_handle_t *out_handle);
 static int32_t getVoltage();
 
 
-//determine the esp ADC reference voltage which is around 1100 mV
+/**
+ * determine the esp ADC reference voltage which is around 1100 mV
+ */
 static bool adc_calibration(adc_unit_t unit, adc_atten_t atten, adc_cali_handle_t *return_handle){
     adc_cali_handle_t handle = NULL;
     esp_err_t ret = ESP_FAIL;
@@ -47,7 +49,7 @@ static bool adc_calibration(adc_unit_t unit, adc_atten_t atten, adc_cali_handle_
 }
 
 void initBatteryRead(){
-    //adc init
+    //ADC init
     adc_oneshot_unit_init_cfg_t init_config = {
         .unit_id = ADC_UNIT_1,
         .ulp_mode = ADC_ULP_MODE_DISABLE,
@@ -55,10 +57,11 @@ void initBatteryRead(){
 
     ESP_ERROR_CHECK(adc_oneshot_new_unit(&init_config, &adc_handle));
 
-    //adc configuration
-    //wenn .atten auf 0db Dämpfung gesetzt ist, ist der mögliche Wertebereich von 0 bis 1.1V
-    //bei .atten 12db wird der Wertebereich von 0 bis theoretisch 3.9V (3.55*1.1V) verwendet aber durch VDD auf 3.3V begrenzt 
-    //recommended range between 150 to 2450 mV at 12db
+    /*ADC configuration
+     * if .atten is set to 0db attenuation, the possible value range is from 0 to 1.1V
+     * at .atten 12db the value range from 0 to theoretically 3.9V (3.55*1.1V) is used but limited by VDD to 3.3V 
+     * recommended range between 150 to 2450 mV at 12db
+     */
     adc_oneshot_chan_cfg_t config = {
         .bitwidth = ADC_BITWIDTH_12,
         .atten = ADC_ATTEN_DB_11,
@@ -70,7 +73,9 @@ void initBatteryRead(){
     adc_calibrated = adc_calibration(ADC_UNIT_1, ADC_ATTEN_DB_11, &adc_cal_handle);
 }
 
-//Voltage in mV
+/**
+ * determines the applied voltage at the ADC. Either calibrated or raw.
+ */
 static int32_t getVoltage(){
     int raw_val, voltage;
     adc_oneshot_read(adc_handle, ADC_CHANNEL_4, &raw_val);
@@ -86,7 +91,10 @@ static int32_t getVoltage(){
 }
 
 void battery_Timer_Event(TimerHandle_t ev){
-    //https://esp32.com/viewtopic.php?t=1459
+    /* If there is too much output, the ESP crashes
+     * https://esp32.com/viewtopic.php?t=1459
+     */
+
 
     getVoltage();
     if(measurementCount < 10){
@@ -98,7 +106,7 @@ void battery_Timer_Event(TimerHandle_t ev){
         measurementCount = 0;
 
         //battery range between 3.4 and 4.2V
-        //r2/(r1+r2) = 0.755 akutell
+        //r2/(r1+r2) = 0.755 with the used resistors
         //vmax_in = 4.2*0.755 = 3.171
         //vmin_in = 3.8*0.755 = 2.869
         //steps = (3171-2869)/100 = 302/100
