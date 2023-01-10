@@ -9,20 +9,20 @@
 //SLA (0x3C) + WRITE_MODE (0x00) =  0x78 (0b01111000)
 #define SSD1306_ADDRESS                     0x3C
 
-//allgemeine infos
-//startup des ssd1306 wird durch Kondensatoren auf dem PCB geregelt --> beachten bei pcb design
+//general info
+//startup of the ssd1306 is controlled by capacitors on the PCB
 #define SSD1306_PAGES                       8
 #define SSD1306_TAG                         "SSD1306"
 #define SSD1306_I2C_NUM_CON                 I2C_NUM_0
 
-//setzen des controllbytes für die art der daten die folgend kommen
+//set the control byte for the type of data that comes after the control byte
 #define SSD1306_CONTROL_BYTE_CMD_STREAM    0x00
 #define SSD1306_CONTROL_BYTE_CMD_SINGLE    0x80
 #define SSD1306_CONTROL_BYTE_DATA_SINGLE   0xC0
 #define SSD1306_CONTROL_BYTE_DATA_STREAM   0x40
 
-//grundbefehle
-#define SSD1306_CMD_SET_CONTRAST           0x81    // gefolgt von 0x7F
+//basic commands
+#define SSD1306_CMD_SET_CONTRAST           0x81    //followed by 0x7F
 #define SSD1306_CMD_DISPLAY_RAM            0xA4
 #define SSD1306_CMD_DISPLAY_ALLON          0xA5
 #define SSD1306_CMD_DISPLAY_NORMAL         0xA6
@@ -30,15 +30,15 @@
 #define SSD1306_CMD_DISPLAY_OFF            0xAE
 #define SSD1306_CMD_DISPLAY_ON             0xAF
 
-//GDDRAM (Graphic Display Data RAM) adressierung
+//GDDRAM (Graphic Display Data RAM) addressing
 #define SSD1306_CMD_SET_MEMORY_ADDR_MODE   0x20
-#define SSD1306_CMD_SET_HORI_ADDR_MODE     0x00    // horizontaler adressierungsmodus
-#define SSD1306_CMD_SET_VERT_ADDR_MODE     0x01    // vertikaler adressierungsmodus
-#define SSD1306_CMD_SET_PAGE_ADDR_MODE     0x02    // page adressierungsmodus
+#define SSD1306_CMD_SET_HORI_ADDR_MODE     0x00    // horizontal addressing mode
+#define SSD1306_CMD_SET_VERT_ADDR_MODE     0x01    // vertical addressing mode
+#define SSD1306_CMD_SET_PAGE_ADDR_MODE     0x02    // page addressing mode
 #define SSD1306_CMD_SET_COLUMN_RANGE       0x21    // can be used only in HORZ/VERT mode - follow with 0x00 and 0x7F = COL127
 #define SSD1306_CMD_SET_PAGE_RANGE         0x22    // can be used only in HORZ/VERT mode - follow with 0x00 and 0x07 = PAGE7
 
-//Hardwarekonfiguration
+//hardware configuration
 #define SSD1306_CMD_SET_DISPLAY_START_LINE 0x40
 #define SSD1306_CMD_SET_SEGMENT_REMAP_0    0xA0    
 #define SSD1306_CMD_SET_SEGMENT_REMAP_1    0xA1    
@@ -57,75 +57,75 @@
 // Charge Pump
 #define SSD1306_CMD_SET_CHARGE_PUMP        0x8D    // follow with 0x14
 
-// Scrolling Befehle
+// scroll command
 #define SSD1306_CMD_DEACTIVE_SCROLL        0x2E
 
-//buffer damit der aktuelle Output auch im Speicher des ESP vorhanden ist
+//buffer so that the current output is also available in the memory of the ESP
 static uint8_t* ssd1306_buffer;
 
 void ssd1306_init(){
 
-    //buffer für i2c befehle erstellen
+    //create buffer for i2c commands
     i2c_cmd_handle_t cmd = i2c_cmd_link_create();
 
     i2c_master_start(cmd);
 
-    //Adresse des Displays setzen und in den Schreibmodus übergehen --> ack zulassen
+    //Set address of display and enter write mode --> allow ack
     i2c_master_write_byte(cmd, (SSD1306_ADDRESS << 1) | I2C_MASTER_WRITE, true);
 
-    //kontroll-byte setzen, dass ein command stream kommt, um das oled für den start zu setzen
+    //set control byte that a command stream comes to set the oled for startup
     i2c_master_write_byte(cmd, SSD1306_CONTROL_BYTE_CMD_STREAM, true);
 
-    //Reihenfolge anscheinend im Datasheet
-    //Display ausschalten
+    //Sequence in datasheet
+    //turn display off
     i2c_master_write_byte(cmd, SSD1306_CMD_DISPLAY_OFF, true);
-    //mux ratio setzen, um die Anzahl der zeilen anzupassen
+    //set mux ratio to adjust the number of lines
     i2c_master_write_byte(cmd, SSD1306_CMD_SET_MUX_RATIO, true);
     i2c_master_write_byte(cmd, 0x1F, true);
-    //display offset zurücksetzen auf 0
+    //reset display offset to 0
     i2c_master_write_byte(cmd, SSD1306_CMD_SET_DISPLAY_OFFSET, true);
 	i2c_master_write_byte(cmd, 0x00, true);
-    //setzen des RAM Display start zeile auf 0
+    //set the RAM display start line to 0
     i2c_master_write_byte(cmd, SSD1306_CMD_SET_DISPLAY_START_LINE, true);
-    //spiegeln der x-achse alternative = SSD1306_CMD_SET_SEGMENT_REMAP_0
+    //mirror the x-axis. alternative = SSD1306_CMD_SET_SEGMENT_REMAP_0
     i2c_master_write_byte(cmd, SSD1306_CMD_SET_SEGMENT_REMAP_1, true);  
-    //spiegeln der y-achse alternative = SSD1306_CMD_SET_COM_SCAN_MODE_0
+    //mirror the y-axis. alternative = SSD1306_CMD_SET_COM_SCAN_MODE_0
     i2c_master_write_byte(cmd, SSD1306_CMD_SET_COM_SCAN_MODE_1, true);	
-    //setzen der COM-PinMap für 32 Zeilen anpassen
+    //set the COM PinMap to fit 32 lines
     i2c_master_write_byte(cmd, SSD1306_CMD_SET_COM_PIN_MAP, true);
     i2c_master_write_byte(cmd, 0x02, true);
-    //contrast auf höchste stufe setzen
+    //set contrast to highest level
     i2c_master_write_byte(cmd, SSD1306_CMD_SET_CONTRAST, true);
 	i2c_master_write_byte(cmd, 0xFF, true);
-    //Rendern vom RAM
+    //Render from RAM
     i2c_master_write_byte(cmd, SSD1306_CMD_DISPLAY_RAM, true);
-    //Set the V_COMH deselect volatage to max (default 0x20)
+    //V_COMH deselect voltage set to max (default 0x20)
     i2c_master_write_byte(cmd, SSD1306_CMD_SET_VCOMH_DESELECT, true);
 	i2c_master_write_byte(cmd, 0x30, true);
-    //Speicheradressierungsmodus setzen
+    //Set memory addressing mode
     i2c_master_write_byte(cmd, SSD1306_CMD_SET_MEMORY_ADDR_MODE, true);
 	i2c_master_write_byte(cmd, SSD1306_CMD_SET_HORI_ADDR_MODE, true);
-    //scroll für den start deaktivieren
+    //Disable scroll for startup
     i2c_master_write_byte(cmd, SSD1306_CMD_DEACTIVE_SCROLL, true);
-    //Set precharge cycles to high cap type --> ist default
+    //Set precharge cycles to high cap type --> is default
     i2c_master_write_byte(cmd, SSD1306_CMD_SET_PRECHARGE, true);
     i2c_master_write_byte(cmd, 0x22, true);
-    //setzen ob pixel invertiert werden sollen oder nicht --> 1 ist an
+    //set if pixel should be inverted or not --> 1 is on
     i2c_master_write_byte(cmd, SSD1306_CMD_DISPLAY_NORMAL, true);
-    //Set Display Clock divide Ratio/Oscillator Frequency (default setzen)
+    //Set Display Clock divide Ratio/Oscillator Frequency (default set)
     i2c_master_write_byte(cmd, SSD1306_CMD_SET_DISPLAY_CLK_DIV, true);
 	i2c_master_write_byte(cmd, 0x80, true);
-    //charge pump muss aktiviert sein wenn das display an sein wird
+    //charge pump must be activated when the display will be on
     i2c_master_write_byte(cmd, SSD1306_CMD_SET_CHARGE_PUMP, true);
 	i2c_master_write_byte(cmd, 0x14, true);
-    //display aktivieren
+    //activate display
     i2c_master_write_byte(cmd, SSD1306_CMD_DISPLAY_ON, true);
 
-    //stop signal zur queue hinzufügen
+    //add stop signal to queue
     i2c_master_stop(cmd);
 
-    //alle gebufferten befehle werten mutex gesichert auf einmal über i2c übertragen
-    //letzer parameter ist die zeit die gewartet werden soll bei den ack bevor es als timeout gewertet werden soll
+    //transfer all buffered commands values mutex saved at once via i2c
+    //last parameter is the time to wait at the ack before it should be evaluated as timeout
     esp_err_t espRc = i2c_master_cmd_begin(SSD1306_I2C_NUM_CON, cmd, 10/portTICK_PERIOD_MS);
 
 	if (espRc == ESP_OK) {
@@ -134,18 +134,19 @@ void ssd1306_init(){
 		ESP_LOGE(SSD1306_TAG, "OLED configuration failed. code: 0x%.2X", espRc);
 	}
 
-    //link buffer löschen mit den i2c befehlen
+    //clear link buffer with the i2c commands
     i2c_cmd_link_delete(cmd);
 
-    //buffer erstellen
-    // jede page hat 128 segmenente mit jeweils 8 Bit. Für höhe von 32 Pixel werden 4 Pages benötigt
-    // ssd1780-datasheet seite 37&38
+    //create buffer
+    //each page has 128 segments with 8 bits each. For a height of 32 pixels 4 pages are needed.
+    //ssd1780-datasheet page 37 & 38
     ssd1306_buffer = (uint8_t *)malloc(SSD1306_WIDTH * (SSD1306_HEIGHT / 8));
     ssd1306_clear();
     ssd1306_display();
 }
 
 void I2C_master_init(){
+    //setup the i2c driver
     i2c_config_t conf = {
         .mode = I2C_MODE_MASTER,
         .sda_io_num = 21,
@@ -165,30 +166,30 @@ void ssd1306_clear(){
 void ssd1306_display(){
     i2c_cmd_handle_t cmd;
 
-    //buffer für i2c befehle erstellen
+    //create buffer for i2c commands
     cmd = i2c_cmd_link_create();
 	i2c_master_start(cmd);
 
-    //Adresse des Displays setzen und in den Schreibmodus übergehen --> ack zulassen
+    //Set address of display and enter write mode --> allow ack
     i2c_master_write_byte(cmd, (SSD1306_ADDRESS << 1) | I2C_MASTER_WRITE, true);
 
-    //kontroll-byte setzen, dass ein command stream kommt, um die größe des displays festzulegen
+    //set control byte that a command stream comes to set the size of the display
     i2c_master_write_byte(cmd, SSD1306_CONTROL_BYTE_CMD_STREAM, true);
-    //spaltenbreite festlegen
+    //Set column width
     i2c_master_write_byte(cmd, SSD1306_CMD_SET_COLUMN_RANGE, true);
     i2c_master_write_byte(cmd, 0x00, true);
     i2c_master_write_byte(cmd, 0x7F, true);
-    //zeilenanzahl festlegen
+    //set number of lines
     i2c_master_write_byte(cmd, SSD1306_CMD_SET_PAGE_RANGE, true);
     i2c_master_write_byte(cmd, 0x00, true);
     i2c_master_write_byte(cmd, 0x07, true);
 
-    //Konfiguration übertragen
+    //send configuration
     i2c_master_stop(cmd);
 	i2c_master_cmd_begin(SSD1306_I2C_NUM_CON, cmd, 10/portTICK_PERIOD_MS);
 	i2c_cmd_link_delete(cmd);
 
-    //Datenübertragen
+    //send data
 	cmd = i2c_cmd_link_create();
 	i2c_master_start(cmd);
 	i2c_master_write_byte(cmd, (SSD1306_ADDRESS << 1) | I2C_MASTER_WRITE, true);
@@ -217,7 +218,7 @@ void ssd1306_setPixel(uint8_t x, uint8_t y, bool status){
 }
 
 void ssd1306_setChar(char c, uint8_t x, uint8_t y){
-
+    //calc the index in the font array
     if(c >= 'a' && c <= 'z'){
         c = c-'a'+1;
     } else if (c >= '0' && c <= '9'){

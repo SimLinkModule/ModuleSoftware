@@ -18,17 +18,30 @@ static uint8_t scale_Range_Digital(uint16_t value);
 
 ChannelDataStruct channelData = {0};
 
+/**
+ * Calc crc for a single char.
+ * 
+ * @param crc       current crc value 
+ * @param a         char to check
+ * @return          new crc value
+ */
 static uint8_t crcSingleChar(uint8_t crc, uint8_t a)
 {
+    //move char bitstring eight times to the left and every time there is a 1 at the msb then xor with the generatorpolynom 0xD5 --> normal crc calculation
     crc ^= a;
-    //zeichen wird acht mal nach links geschoben und jedes mal geschaut ob höchste stelle eine 1 ist, wenn dann polynom xor --> klassisches crc rechnen
     for (int i = 0; i < 8; i++) {
         crc = (crc << 1) ^ ((crc & 0x80) ? 0xD5 : 0);
     }
     return crc;
 }
 
-//get crc from message
+/**
+ * CRC calculation for a whole string
+ * 
+ * @param message       get crc for this string
+ * @param length        length of the string
+ * @return              return the crc value
+ */
 static uint8_t crcMessage(uint8_t message[], uint8_t length)
 {
     uint8_t crc = 0;
@@ -38,12 +51,22 @@ static uint8_t crcMessage(uint8_t message[], uint8_t length)
     return crc;
 }
 
-//scale from range [173,1811] to range [0,2047]
+/**
+ * scale range from [173,1811] to [0,2047]
+ * 
+ * @param value         value to scale
+ * @return              new scaled value 
+ */
 static uint16_t scale_Range_Analog(uint16_t value){
     return (uint16_t)((value-173)*1.25);
 }
 
-//scale from range [173,1811] to range [0,1]
+/**
+ * @brief scale range from [173,1811] to [0,1]
+ * 
+ * @param value         value to scale
+ * @return              new scaled value
+ */
 static uint8_t scale_Range_Digital(uint16_t value){
     if(value <= 992){
         return 0;
@@ -53,9 +76,9 @@ static uint8_t scale_Range_Digital(uint16_t value){
 }
 
 void initCRSF_read(){
-    /* Configure parameters of an UART driver,
-     * communication pins and install the driver */
-    //uart driver erstellt eigene interrupts
+    /* configure the uart driver
+     * the uart driver creates his own interrupt
+     */
     uart_config_t uart_config = {
         .baud_rate = 420000,
         .data_bits = UART_DATA_8_BITS,
@@ -65,19 +88,20 @@ void initCRSF_read(){
         .source_clk = UART_SCLK_APB,
     };
 
-    //UART 2 verwenden, da uart 0 für console benötigt wird und uart1 hab ich gelesen für spi oder irgendetwas anderes
+    //use uart 2, because uart 0 is used for the console and uart1 could be used for spi
     ESP_ERROR_CHECK(uart_driver_install(UART_NUM_2, 1024 * 2, 0, 0, NULL, 0));
     uart_set_line_inverse(UART_NUM_2,UART_SIGNAL_RXD_INV);
     ESP_ERROR_CHECK(uart_param_config(UART_NUM_2, &uart_config));
     ESP_ERROR_CHECK(uart_set_pin(UART_NUM_2, UART_PIN_NO_CHANGE, 16, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE));
 
-    //interrupt auslösen bei timeout (primär) und bei überlauf eines thresholds
+    //trigger interrupt after the timeout (primary) or if a overflow happens
     uart_intr_config_t uart_intr = {
         .intr_enable_mask = UART_INTR_RXFIFO_TOUT | UART_INTR_RXFIFO_FULL,
         .rx_timeout_thresh = 10,
         .rxfifo_full_thresh = 200,
     };
-    //diese interrupt schwellwellen speichern
+
+    //store the interrupt thresholds
     ESP_ERROR_CHECK(uart_intr_config(UART_NUM_2, &uart_intr));
     ESP_ERROR_CHECK(uart_enable_rx_intr(UART_NUM_2));
 }
@@ -88,72 +112,72 @@ void crsf_get_ChannelData_task(void *arg)
     uint8_t *data = (uint8_t *) malloc(1024);
 
     while (1) {
-        //bool if channel data changed from channeldata t-1
+        //bool if channel data changed from channeldata t-1. Used to send a BLE update
         bool changed = false;
 
         // get size in uart buffer
         int length = 0;
         ESP_ERROR_CHECK(uart_get_buffered_data_len(UART_NUM_2, (size_t*)&length));
 
-        //mit daten arbeiten, wenn welche vorhanden sind
+        //work with the data, if data exists
         if(length){
 
             //read uart data
             int len = uart_read_bytes(UART_NUM_2, data, length, 20 / portTICK_PERIOD_MS);
 
-            //RX Buffer leeren wenn Frame im temporären buffer
+            //clear rx buffer after the data is in the temp buffer
             uart_flush(UART_NUM_2);
 
-            //len of data read from rx buffer
+            //check again the length of the data in the temp buffer
             if(len > 0){
-                //daten durchgehen
+                //loop through data
                 for(int i = 0; i < len; i++){
-                    //Paketaufbau: 0xEE (Addresse) + 0x18 (Länge in Byte) + 0x16 (Typenfeld: Kanaldaten)
+                    //check for packets with the data: 0xEE(address) + 0x18(length in Bytes) + 0x16(typefield: channel data)
                     if((data[i] == 0xEE) && (i+25)<len){
                         if(data[i+2] == 0x16){
-                            //CRC überprüfen ob kein rest rauskommst
+                            //CRC check. should be zero
                             if(crcMessage(data+i+2, data[i+1]) == 0){
 
-                                //used = wie viel Bits bereits in einen Byte verwendet wurden
+                                //used = How many bits were used in a temp buffer byte.
                                 int used = 0;
-                                //dataIndex = Index des Datenbytes im Buffer
+                                //dataIndex = Index of the data byte in the buffer
                                 int dataIndex = i+3;
 
-                                //Da 16 kanäle vorhanden sind muss es 16 mal durchgegangen werden
+                                //loop through all 16 channels
                                 for(int j = 0; j<16; j++){
-                                    //Die restlichen vorhandenen Daten eines Bytes an LSB setzen
+                                    //Set the remaining existing data of a temp buffer byte to LSB.
                                     uint16_t value = data[dataIndex] >> used;
 
-                                    //ein neues Byte muss verwendet werden
+                                    //use a new byte from the temp buffer.
                                     dataIndex++;
 
-                                    //Anzahl der noch vorhanden Bits eines Bytes im angefangenen Byte
+                                    //Number of remaining channel bits of a byte in the started temp buffer byte.
                                     uint8_t availableBits = 8-used;
 
                                     if(11-availableBits > 8){
-                                        //3Bytes werden benötigt, wenn für ein Kanal (11Bit) noch mehr als 8 Bit benötigt werden
+                                        //3bytes are required if more than 8 bits are still needed for one channel (11bit)
 
-                                        //komplettes zweites Byte verwenden
+                                        //use entire second byte
                                         value = value | (data[dataIndex] << availableBits);
-                                        //ein neues Byte muss verwendet werden
+                                        //use a new Byte
                                         dataIndex++;
 
-                                        //vom dritten Byte noch die benötigten Bits in die MSB stellen schieben
+                                        //from the third byte still shift the needed bits into the MSB
                                         value = value | ((data[dataIndex]&((1U << (11-(8+availableBits))) - 1U)) << (8+availableBits));
 
-                                        //Anzahl der verwendeten Bits im akutellen Byte neu berechnen
+                                        //Recalculate number of used bits in current temp buffer byte
                                         used = 11-(8+availableBits);
                                     } else {
-                                        //Wenn nur ein zweites Byte für 11Bit-Daten benötigt wird
+                                        //If only a second byte is needed for 11Bit data
 
-                                        //Aus dem zweiten Byte noch die fehlenden Bits an die MSB stellen schieben von 11 Bit
+                                        //Move the missing bits from the second byte to the MSB positions. (11Bit per channel)
                                         value = value | ((data[dataIndex]&((1U << (11-availableBits)) - 1U)) << availableBits);
 
-                                        //berechnen wie viele Bits im aktuellen Byte schon verwendet wurden
+                                        //calculate how many bits in the current temp buffer byte have already been used
                                         used = 11-availableBits;
                                     }
 
-                                    //Kanaldaten abspeichern --> ersten 8 kanäle sind analog rest digital
+                                    //store channel data --> first 8 channel are analog rest ist digital
                                     uint16_t newVal;
                                     uint8_t origDataButtons;
                                     switch(j){
@@ -235,18 +259,18 @@ void crsf_get_ChannelData_task(void *arg)
                                             break;
                                     }
                                 }
-                                //Kanaldaten ausgeben
-                                //wenn esp_logi ausgegeben wird dann kann es sein das watchdog timer für den task nicht zurückgesetzt wird ist aber nicht so schlimm solang der output einfach weggelassen wird in stpäteren code
+
                                 if(changed){
                                     if(notify_state_report_data){
                                         struct os_mbuf *om;
 
-                                        //dann passt die größe vom paket zu den report deskriptor wenn 17 fesst vorprogrammiert ist --> sizeof(channelData) gibt 18
+                                        //set size to 17, because of padding bits in the struct channelData calculates 18
                                         om = ble_hs_mbuf_from_flat(&channelData, 17);
                                         //Deprecated. Should not be used. Use ble_gatts_notify_custom instead.
                                         ble_gattc_notify_custom(conn_handle, report_data_handle, om);
                                     }
                                 }
+                                //if esp_logi is used then the watchdog timer for the task may not be reset
                                 //ESP_LOGI("Channel-Data","%4d %4d %4d %4d %4d %4d %4d %4d %4d %4d %4d %4d %4d %4d %4d %4d", channelData.throttle, channelData.yaw, channelData.pitch, channelData.roll, channelData.aux1, channelData.aux2, channelData.aux3, channelData.aux4, (channelData.buttons & (0x01<<0)), (channelData.buttons & (0x01<<1)), (channelData.buttons & (0x01<<2)), (channelData.buttons & (0x01<<3)), (channelData.buttons & (0x01<<4)), (channelData.buttons & (0x01<<5)), (channelData.buttons & (0x01<<6)), (channelData.buttons & (0x01<<7)));
                                 break;
                             }
@@ -255,6 +279,7 @@ void crsf_get_ChannelData_task(void *arg)
                 }
             }
         } else {
+            //Create a delay if no data could be loaded
             vTaskDelay(10 / portTICK_PERIOD_MS);
         }
     }

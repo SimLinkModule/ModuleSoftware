@@ -16,10 +16,19 @@ typedef struct ChannelDataStruct{
   uint8_t buttons;      //buttons = aux12(b8) .. aux5(b1)
 } ChannelDataStruct;
 
-//store for channeldata
+//global store for channeldata
 extern ChannelDataStruct channelData;
 
+/**
+ * initializes UART to read remote control channel data.
+ */
 void initCRSF_read();
+
+/**
+ * Read the UART data. Check if it is the right frame and make a CRC check. Then process the channel data and convert it to a range from 0 to 2047.
+ * 
+ * @param arg Required for FreeRTOS. Not used.
+ */
 void crsf_get_ChannelData_task(void *arg);
 
 #endif
