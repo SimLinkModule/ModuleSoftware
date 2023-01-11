@@ -13,6 +13,13 @@
 #include "ssd1306.h"
 #include "button.h"
 
+/**
+ * The callback to associate with this advertising procedure. If advertising ends, the event is reported through this callback. If advertising results in a connection, the connection inherits this callback as its event-reporting mechanism.
+ * 
+ * @param event     data about the GAP event
+ * @param arg       not used
+ * @return          always 0
+ */
 static int bleGAPEevent(struct ble_gap_event *event, void *arg);
 
 static const char *tag_GAP = "SimLinkModule_GAP";
@@ -22,11 +29,6 @@ uint16_t conn_handle = 0;
 bool notify_state_report_data = false;
 bool notify_state_battery_status = false;
 
-/*
- * Enables advertising with parameters:
- *     o General discoverable mode
- *     o Undirected connectable mode
- */
 void bleAdvertise(void){
     ssd1306_clear();
     ssd1306_setString("Connecting",10,9);
@@ -37,27 +39,14 @@ void bleAdvertise(void){
     int rc;
     const char* name;
 
-    /*
-     *  Set the advertisement data included in our advertisements:
-     *     o Flags (indicates advertisement type and other general info)
-     *     o Advertising tx power
-     *     o Device name
-     */
+    //set the advertisement data included in the advertisement
     memset(&fields, 0, sizeof(fields));
 
-    /*
-     * Advertise two flags:
-     *      o Discoverability in forthcoming advertisement (general)
-     *      o BLE-only (BR/EDR unsupported)
-     */
+    //discoverability in forhtcoming advertisement and BLE only (BR/EDR in nimlbe not supported)
     fields.flags = BLE_HS_ADV_F_DISC_GEN |
                    BLE_HS_ADV_F_BREDR_UNSUP;
 
-    /*
-     * Indicate that the TX power level field should be included; have the
-     * stack fill this value automatically.  This is done by assigning the
-     * special value BLE_HS_ADV_TX_PWR_LVL_AUTO.
-     */
+    //tx power level field ist filled automatically via the BLE stack
     fields.tx_pwr_lvl_is_present = 1;
     fields.tx_pwr_lvl = BLE_HS_ADV_TX_PWR_LVL_AUTO;
 
@@ -69,12 +58,12 @@ void bleAdvertise(void){
     fields.appearance = ble_svc_gap_device_appearance();
     fields.appearance_is_present = 1;
 
+    //only one service can be added. ADV packet size to small for more services
     fields.num_uuids16 = 1;
     fields.uuids16_is_complete = 0;
     fields.uuids16 = (ble_uuid16_t[]){
         hid_service_uuid
     };
-    //geht nur eins weil sonst die adv packetgröße nicht reicht
 
     rc = ble_gap_adv_set_fields(&fields);
     if (rc != 0) {
@@ -82,12 +71,13 @@ void bleAdvertise(void){
         return;
     }
 
-    /* Begin advertising */
     memset(&adv_params, 0, sizeof(adv_params));
     //undirected-connectable
     adv_params.conn_mode = BLE_GAP_CONN_MODE_UND;
     //general-discoverable
     adv_params.disc_mode = BLE_GAP_DISC_MODE_GEN;
+
+    //Begin advertising
     rc = ble_gap_adv_start(bleAddressType, NULL, BLE_HS_FOREVER,
                            &adv_params, bleGAPEevent, NULL);
     if (rc != 0) {
@@ -96,20 +86,20 @@ void bleAdvertise(void){
     }
 }
 
-//The callback to associate with this advertising procedure. If advertising ends, the event is reported through this callback. If advertising results in a connection, the connection inherits this callback as its event-reporting mechanism.
+//
 static int bleGAPEevent(struct ble_gap_event *event, void *arg) {
     struct ble_gap_conn_desc desc;
     int rc;
 
     switch (event->type) {
     case BLE_GAP_EVENT_CONNECT:
-        /* A new connection was established or a connection attempt failed */
+        //A new connection was established or a connection attempt failed
         ESP_LOGI(tag_GAP, "connection %s; status=%d\n",
                     event->connect.status == 0 ? "established" : "failed",
                     event->connect.status);
 
         if (event->connect.status != 0) {
-            /* Connection failed; resume advertising */
+            //Connection failed; resume advertising
             bleAdvertise();
         } else {
             ssd1306_clear();
@@ -117,12 +107,12 @@ static int bleGAPEevent(struct ble_gap_event *event, void *arg) {
 
             struct ble_gap_upd_params connectionParameters = {
                 //itvl: These determine how often the devices will "ping-pong" each other and also when they will send any data required. So if you set the value to something like 20, that would mean packets are sent every 25ms, which will obviously consume more power than say a value of 80 (100ms). The reason for the min max values is so the devices can negotiate a compromise for the best possible communication, you can set these to the same value if you prefer.
-                .itvl_min = (int)(11.25/1.25), //1.25ms units; laut apple 11.25 minimum fuer hid
-                .itvl_max = (int)(20/1.25),    //minimum ist laut apple eigentlich 15ms deswegen etwas höher setzen
+                .itvl_min = (int)(11.25/1.25), //1.25ms units; according to apple 11.25 minimum for HID
+                .itvl_max = (int)(20/1.25),    //minimum according to apple actually 15ms therefore slightly higher
                 //latency: This is how many "ping-pong" (connection interval) events the slave(server) device is allowed to skip without the client device considering the connection terminated. So if you had a 25ms connection interval and you wanted to sleep for 1 second you could set this value to 40 and the client would consider the connection active for up to 40 skipped intervals.
                 .latency = 30,            //up to 30 connection intervals
                 //timeout: This is the absolute (disconnection) timeout, if no packets are received by either device within this time the connection is considered terminated.
-                .supervision_timeout = 1860/10 //10ms units, laut apple größer als itvl_max * (latency + 1) * 3
+                .supervision_timeout = 1860/10 //10ms units, according to apple greater than itvl_max * (latency + 1) * 3
             };
 
             //Update connection parameters are not allowed during iPhone HID encryption, slave turns off the ability to automatically update connection parameters during encryption.
@@ -145,7 +135,7 @@ static int bleGAPEevent(struct ble_gap_event *event, void *arg) {
         notify_state_report_data = false;
         notify_state_battery_status = false;
 
-        /* Connection terminated; resume advertising */
+        //Connection terminated; resume advertising
         bleAdvertise();
         break;
 
@@ -164,7 +154,7 @@ static int bleGAPEevent(struct ble_gap_event *event, void *arg) {
             break;
         }
 
-        //muss eigentlich nur gemacht werden bei den attr_handle wo es auf encrypted nur gelesen wird --> input report
+        //actually only needs to be done on the attr_handle where it is only read if encrypted --> input report
         if(!desc.sec_state.encrypted) {
             ble_gap_security_initiate(event->subscribe.conn_handle);
         }
@@ -195,26 +185,25 @@ static int bleGAPEevent(struct ble_gap_event *event, void *arg) {
         }
         break;
     case BLE_GAP_EVENT_REPEAT_PAIRING:
-        //https://ubuntu.com/core/docs/bluez/reference/pairing/introduction
-        /* We already have a bond with the peer, but it is attempting to
+        /*
+         * https://ubuntu.com/core/docs/bluez/reference/pairing/introduction
+         * We already have a bond with the peer, but it is attempting to
          * establish a new secure link.  This app sacrifices security for
          * convenience: just throw away the old bond and accept the new link.
          */
         ESP_LOGI(tag_GAP, "establish new secure link");
 
-        /* Delete the old bond. */
+        //Delete the old bond.
         rc = ble_gap_conn_find(event->repeat_pairing.conn_handle, &desc);
         assert(rc == 0);
         ble_store_util_delete_peer(&desc.peer_id_addr);
 
-        /* Return BLE_GAP_REPEAT_PAIRING_RETRY to indicate that the host should
-         * continue with the pairing operation.
-         */
+        //Return BLE_GAP_REPEAT_PAIRING_RETRY to indicate that the host should continue with the pairing operation.
         return BLE_GAP_REPEAT_PAIRING_RETRY;
         break;
 
     case BLE_GAP_EVENT_PASSKEY_ACTION:
-        //https://community.nxp.com/t5/Wireless-Connectivity-Knowledge/KW36-Enabling-Out-Of-Band-Pairing-on-a-Bluetooth-LE-Central-and/tac-p/1238698
+        // info about BLE pairing: https://community.nxp.com/t5/Wireless-Connectivity-Knowledge/KW36-Enabling-Out-Of-Band-Pairing-on-a-Bluetooth-LE-Central-and/tac-p/1238698
         ESP_LOGI(tag_GAP, "PASSKEY_ACTION_EVENT started \n");
         
         struct ble_sm_io pkey = {0};
@@ -225,25 +214,26 @@ static int bleGAPEevent(struct ble_gap_event *event, void *arg) {
             pkey.action = event->passkey.params.action;
             
             pkey.passkey = esp_random();
-	        /* Max value is 999999 */
+	        //Max value is 999999
 	        pkey.passkey %= 1000000;
             
             char pinStr[12];
             snprintf(pinStr, 12,"%06d", (int)pkey.passkey);
 
+            //display passkey for the other side
             ssd1306_clear();
             ssd1306_setString("PIN",48,0);
             ssd1306_setString(pinStr,31,18);
             ssd1306_display();
-            //display passkey for the other side
 
             rc = ble_sm_inject_io(event->passkey.conn_handle, &pkey);
             ESP_LOGI(tag_GAP, "ble_sm_inject_io result: %d\n", rc);
         } else if (event->passkey.params.action == BLE_SM_IOACT_NUMCMP) {
-            //BLE_SM_IO_CAP_DISP_YES_NO option
-
-            //gegenseite kann auch mit yes oder no bestätigen den pin
-            //verify with buttons Yes or No --> add timeout after x seconds
+            /*
+             *BLE_SM_IO_CAP_DISP_YES_NO option
+             *both sides must answer yes or no
+             *verify with buttons Yes or No --> add timeout after x seconds
+             */
             char pinStr[12];
             snprintf(pinStr, 12,"%06d", (int)event->passkey.params.numcmp);
             ssd1306_clear();
@@ -270,16 +260,18 @@ static int bleGAPEevent(struct ble_gap_event *event, void *arg) {
             ESP_LOGI(tag_GAP, "NUMCP_ACCEPT: %d", pkey.numcmp_accept);
             rc = ble_sm_inject_io(event->passkey.conn_handle, &pkey);
             if(rc != 0){
-                //https://github.com/espressif/esp-idf/issues/8555#issuecomment-1066591071
-                // 0x05 = Authentication Failure error code
+                /*
+                 *Cancel connection if not agreed
+                 *https://github.com/espressif/esp-idf/issues/8555#issuecomment-1066591071
+                 *0x05 = Authentication Failure error code
+                 */
                 ble_gap_terminate(conn_handle, 0x05);
             }
             ESP_LOGI(tag_GAP, "ble_sm_inject_io result: %d\n", rc);
         }
         return 0;
     case BLE_GAP_EVENT_NOTIFY_TX:
-        //Represents a transmitted ATT notification or indication, or a
-        //completed indication transaction.
+        //Represents a transmitted ATT notification or indication, or a completed indication transaction.
         return 0;
     case BLE_GAP_EVENT_IDENTITY_RESOLVED:
         ssd1306_setConnectedImage();

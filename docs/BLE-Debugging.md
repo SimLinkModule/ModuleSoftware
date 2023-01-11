@@ -1,15 +1,15 @@
 # iOS
-- Unter iOS kann die App [LightBlue](https://punchthrough.com/lightblue/) verwendet werden. Zu beachten ist das Apple bei einigen Diensten nicht die rohen Daten an 3rd party Apps weitergeben [S. 197](https://developer.apple.com/accessories/Accessory-Design-Guidelines.pdf). Dadurch können manche Daten nicht gedebugged werden. Ein Service ist beispielsweise HID.
-- Eine weitere Möglichkeit für das Debugging für iOS ist mit einem Macbook auf dem XCode läuft. Dafür gibt es [PacketLogger](https://developer.apple.com/bluetooth/) womit Bluetooth-Pakete live gelogged werden können. Zusätzlich muss auf dem iOS-Gerät ein Logging-Profil heruntergeladen werden und installiert werden.
+- On iOS, the [LightBlue](https://punchthrough.com/lightblue/) app can be used. Note that Apple does not pass the raw data to 3rd party apps for some services [S. 197](https://developer.apple.com/accessories/Accessory-Design-Guidelines.pdf). This means that some data cannot be debugged. One service, for example, is HID.
+- Another possibility for debugging for iOS is with a Mac running XCode. For this there is [PacketLogger](https://developer.apple.com/bluetooth/) which can log Bluetooth packets live. Additionally, a logging profile must be downloaded and installed on the iOS device.
 
 # Android
-- Unter Android können die Apps [LightBlue](https://punchthrough.com/lightblue/) und [nRF Connect](https://play.google.com/store/apps/details?id=no.nordicsemi.android.mcp&hl=en&gl=US) verwendet werden. Dort können mehr Daten / Dienste wie unter iOS ausgelesen werden.
-- In den Entwickleroptionen kann "Bluetooth HCI-Snoop-Protokoll aktiviert" werden und die Daten gelogged werden und später mittels Wirekshark ausgelesen werden.
+- For Android, the apps [LightBlue](https://punchthrough.com/lightblue/) and [nRF Connect](https://play.google.com/store/apps/details?id=no.nordicsemi.android.mcp&hl=en&gl=US) can be used. There you can read more data / services as on iOS.
+- In the developer options "Bluetooth HCI snoop protocol can be enabled" and the data can be logged and later inspected using Wirekshark.
 
 # Linux
 - Tools: hcitool, gatttool, bluetoothctl, hidraw-dump, Bluepy
 
-## Allgemein
+## General
 Edit `/lib/systemd/system/bluetooth.service` and change to:
 
 `ExecStart=/usr/libexec/bluetooth/bluetoothd --noplugin=input,hog`
@@ -18,7 +18,7 @@ Then Bluetooth daemon won't grab input or hog devices and won't create system in
 
 ## hcitool
 
-### Verfügbares Bluetoothgerät am Linuxrechner
+### Available Bluetooth device at the Linux computer
 `hcitool dev`
 
 ### Scan for BLE-Devices
@@ -26,44 +26,44 @@ Then Bluetooth daemon won't grab input or hog devices and won't create system in
 
 ## gatttool
 
-### Verbindung aufbauen
+### Establish connection
 1. `sudo gatttool [-t random] -b <BLE ADDRESS> -I`
 2. `connect`
 
-### Liste aller vorhandenen Dienste aufzeigen
+### Show list of all existing services
 `primary`
 
-### Liste aller vorhandenen Handles
-Jeder Handle ist ein Verbindungspunkt, wo Daten gelesen oder geschrieben werden können.
+### List of all existing handles
+Each handle is a connection point where data can be read or written.
 
 `char-desc`
 
-### Ein Handle auslesen
+### Read a handle
 `char-read-hnd <handle>`
 
-### Schreiben eines Werts in ein Handle
+### Write a value to the handle
 `char-write-req <handle> <data>`
 
 ## bluetoothctl
 `sudo bluetoothctl`
 
-### Geräte suchen
+### Search devices
 `scan le`
 
-### Gerät verbinden
+### Connect device
 `connect <BLE ADDRESS>`
 
-### Info des Geräts
+### Device info
 `info`
 
-### Menü wechseln, damit mit GATT gearbeitet werden kann
+### Change menu to work with GATT
 `menu gatt`
 
-#### Attributliste
+#### list all attributes
 `list-attributes`
 
-#### Attribut auslesen
-- `select-attribute <Pfad>`
+#### read attribute
+- `select-attribute <path>`
 - `read`
 
 ## hidraw-dump
@@ -74,11 +74,11 @@ Jeder Handle ist ein Verbindungspunkt, wo Daten gelesen oder geschrieben werden 
 - `cd hidraw-dump`
 - `make`
 
-### Auslesen aller HID-Deskriptoren
+### GET all HID descriptors
 `sudo ./hidraw-dump`
 
-### HID Deskriptor menschen lesbar machen
-Auf dieser [Website](https://eleccelerator.com/usbdescreqparser/) umwandeln.
+### Make HID descriptor human readable
+Use the [website](https://eleccelerator.com/usbdescreqparser/).
 
 ## Bluepy
 
@@ -88,16 +88,16 @@ Auf dieser [Website](https://eleccelerator.com/usbdescreqparser/) umwandeln.
 3. `cd bluepy/bluepy`
 4. `make`
 
-### Verwendung
+### Usage
 
-#### Starten
+#### start
 `./bluepy-helper`
 
-#### Verbinden
+#### connect
 `conn <BT ADDRESS>`
 
-#### Liste von Diensten
+#### List of services
 `svcs`
 
-## Hinweis:
-- Debugging des XBox controllers hat nur verbunden, wenn man ihn nicht in den Bluetooth-Einstellungen verbunden hatte und wenn mann ihn erst connecting modus bringt wenn man gatttools offen hat und danach connect aufruft. Beim gatttool darf auch nicht die Option random aktiviert sein.
+## Note:
+- Debugging the XBox controller only worked if it was not connected in the Bluetooth settings and if the XBox controller was only switched to connecting mode when gatttools was open and `connect` was called. The option random shouldn't be activated in the gatttool.
