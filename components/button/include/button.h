@@ -17,7 +17,7 @@ void initButtons();
 /**
  * Get the last value for a specific button. If there is no data for 30 seconds it will be aborted.
  * 
- * @param selectedButton        specify a specific button
+ * @param selectedButton        specify a button
  * @return                      High or Low for the button output 
  */
 int getButton(BUTTON *selectedButton);

@@ -14,12 +14,21 @@
 #include "host/util/util.h"
 #include "nimble/nimble_port_freertos.h"
 
+/**
+ * This callback is executed when the host and controller become synced. This happens at startup and after a reset
+ */
 static void bleOnSync(void);
+
+/**
+ * This callback is executed when the host resets itself and the controller
+ * 
+ * @param reason    not used
+ */
 static void bleOnReset(int reason);
 
-/* Define template prototype for store*/
-//located in nimble/host/store/config/src/ble_store_config.c
-//never definded in a .h file
+/**
+ * Define template prototype for store. located in nimble/host/store/config/src/ble_store_config.c. Not defined in any .h nimble file.
+ */
 void ble_store_config_init(void);
 
 static const char *tag_BLE = "SimLinkModule_BLE";
@@ -27,14 +36,14 @@ static const char *tag_BLE = "SimLinkModule_BLE";
 uint8_t bleAddressType = BLE_ADDR_RANDOM;
 
 void initBLE(){
-    //store for returncodes
-    //mynewt.apache.org/latest/network/ble_hs/ble_hs_return_codes.html
+    //list of returncodes: mynewt.apache.org/latest/network/ble_hs/ble_hs_return_codes.html
     int rc;
 
-    /* Initialize NVS — it is used to store PHY calibration data */
-    //NVS = Non-volatile storage library is designed to store key-balue pairs in flash
-    //Ablauf ist in esp idf beschrieben
-    //docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/bluetooth/nimble/index.html
+    /*
+     * Initialize NVS — it is used to store PHY calibration data
+     * NVS = Non-volatile storage library is designed to store key-value pairs in flash
+     * docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/bluetooth/nimble/index.html
+     */
     esp_err_t ret = nvs_flash_init();
     if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
         ESP_ERROR_CHECK(nvs_flash_erase());
@@ -42,17 +51,20 @@ void initBLE(){
     }
     ESP_ERROR_CHECK(ret);
 
-    //Controller initialization, enable and HCI initialization calls have been moved to nimble_port_init. This function can be deleted directly.
-    //ESP_ERROR_CHECK(esp_nimble_hci_and_controller_init());
+    /*
+     *Required in older ESP-IDF version.
+     *Controller initialization, enable and HCI initialization calls have been moved to nimble_port_init. This function can be deleted directly.
+     *ESP_ERROR_CHECK(esp_nimble_hci_and_controller_init());
+     */
 
     nimble_port_init();
 
-    /* Initialize the NimBLE host configuration */
+    //Initialize the NimBLE host configuration
     ble_hs_cfg.sync_cb = bleOnSync;
     ble_hs_cfg.reset_cb = bleOnReset;
 
-    /**
-     * Round-robin status callback.  If a there is insufficient storage capacity
+    /*
+     * Round-robin status callback.  If there is insufficient storage capacity
      * for a new record, delete the oldest bond and proceed with the persist
      * operation.
      *
@@ -62,32 +74,41 @@ void initBLE(){
      */
     ble_hs_cfg.store_status_cb = ble_store_util_status_rr;
 
-    //optional wird ausgeführt wenn ein gatt resource (characteristic, descriptor, sevice) hinzugefügt wird. Also nicht benötigt
+    //optional callback. Called when a GATT resource (characteristic, descriptor, sevice) is added.
     ble_hs_cfg.gatts_register_cb = gattSvrRegisterCb;
 
-    /*Security Manager local input output capabilities*/
-    //io types zum aufbau einer sicheren verbindung
-    //BLE_SM_IO_CAP_DISP_ONLY = Display only
-    //BLE_SM_IO_CAP_DISP_YES_NO = Display & yes & no buttons
-    //BLE_SM_IO_CAP_KEYBOARD_ONLY = Keyboard only
-    //BLE_SM_IO_CAP_NO_IO = just work
-    //BLE_SM_IO_CAP_KEYBOARD_DISP = Keyboard and display
-    //BLE_SM_IO_CAP_KEYBOARD_ONLY && BLE_SM_IO_CAP_KEYBOARD_DISP not implemented
+    /*Security Manager local input output capabilities
+     *io types to establish a secure connection
+     *BLE_SM_IO_CAP_DISP_ONLY = Display only
+     *BLE_SM_IO_CAP_DISP_YES_NO = Display & yes & no buttons
+     *BLE_SM_IO_CAP_KEYBOARD_ONLY = Keyboard only
+     *BLE_SM_IO_CAP_NO_IO = just work
+     *BLE_SM_IO_CAP_KEYBOARD_DISP = Keyboard and display
+     *BLE_SM_IO_CAP_KEYBOARD_ONLY && BLE_SM_IO_CAP_KEYBOARD_DISP not implemented
+    */
     ble_hs_cfg.sm_io_cap = BLE_SM_IO_CAP_DISP_YES_NO;
+
     /*Security Manager secure connections flag
-    if set proper flag in pairing request/response will be set. this results in using LE Secure Connections for pairing if also supported by remote device. Fallback to legacy pairing if not supported by remote.*/
+     *if set proper flag in pairing request/response will be set. this results in using LE Secure Connections for pairing if also supported by remote device. Fallback to legacy pairing if not supported by remote.
+     */
     ble_hs_cfg.sm_sc = 1;
-    /*security Manager bond flag
-    if set proper flag in Pairing request/response will be set. This results in storing keys distributed during bonding.*/
+
+    /*Security Manager bond flag
+     *if set proper flag in Pairing request/response will be set. This results in storing keys distributed during bonding.
+     */
     ble_hs_cfg.sm_bonding = 1;
-    /*security manager mitm flag
-    if set proper flag in pairing request/response will be set. This results in requiring man-in-the-middle protection when pairing.*/
+
+    /*Security manager MITM flag
+     *if set proper flag in pairing request/response will be set. This results in requiring man-in-the-middle protection when pairing.
+     */
     ble_hs_cfg.sm_mitm = 1;
-    /*Security Manager Local Key Distribution Mask*/
+
+    /*Security Manager Local Key Distribution Mask
+     *Refer components/nimble/nimble/nimble/host/include/host/ble_sm.h for
+     * more information
+     */
     ble_hs_cfg.sm_our_key_dist = BLE_SM_PAIR_KEY_DIST_ENC | BLE_SM_PAIR_KEY_DIST_ID;
-    /* Refer components/nimble/nimble/nimble/host/include/host/ble_sm.h for
-     * more information */
-    /*Security Manager Remote Key Distribution Mask*/
+    //Security Manager Remote Key Distribution Mask
     ble_hs_cfg.sm_their_key_dist = BLE_SM_PAIR_KEY_DIST_ENC | BLE_SM_PAIR_KEY_DIST_ID;
 
     rc = gattSvrInit();
@@ -97,30 +118,31 @@ void initBLE(){
     rc = ble_svc_gap_device_name_set(CONFIG_BT_NIMBLE_SVC_GAP_DEVICE_NAME);
     assert(rc == 0);
 
-    //set the appearance of the device
-    //0x03c3 = joystick; 0x03c4 = gamepad
+    /*set the appearance of the device
+     *0x03c3 = joystick; 0x03c4 = gamepad
+     */
     ble_svc_gap_device_appearance_set(0x03C4);
 
-    //https://github.com/espressif/esp-nimble/issues/33
-    //KEINE AHNUNG WAS DAS MACHT ABER DADURCH KANN SICH DER ESP NACH EINEN NEUSTART WIEDER MIT DEM GERÄT VERBINDEN
-    /* XXX Need to have template for store */
+    /*store the identity resolving key (IRK) to establish a connection after restarting the esp.
+     *https://github.com/espressif/esp-nimble/issues/33
+     */
     ble_store_config_init();
 }
 
-//This callback is executed when the host and controller become synced. This happens at startup and after a reset
 static void bleOnSync(void){
-    //int rc;
-
     //rpa = resolvable private address; Address randomly generated from an identity address and an identity resolving key (IRK).
     ble_hs_pvcy_rpa_config(1);
 
-    /* Make sure we have proper identity address set (public preferred) */
-    //rc = ble_hs_util_ensure_addr(0);
+    /* Make sure we have proper identity address set (public preferred)
+     * Works without that
+     * rc = ble_hs_util_ensure_addr(0);
+     */
 
 
-    /*use privacy*/
-    //rc = ble_hs_id_infer_auto(bleAddressType, &bleAddressType);
-    //assert(rc == 0);
+    /* set the BLE address type
+     * Works without that
+     * rc = ble_hs_id_infer_auto(bleAddressType, &bleAddressType);
+     */
 
     uint8_t addr_val[6] = {0};
     if(BLE_HS_ENOADDR == ble_hs_id_copy_addr(BLE_ADDR_PUBLIC, addr_val, NULL)) {
@@ -134,22 +156,22 @@ static void bleOnSync(void){
     print_addr(addr_val);
     ESP_LOGI(tag_BLE, "\n");
 
+    //used to request a context switch to another task
     taskYIELD();
 
-    /*start advertising, when controller and host are in sync*/
+    //start advertising, when controller and host are in sync
     bleAdvertise();
 }
 
-//This callback is executed when the host resets itself and the controller
 static void bleOnReset(int reason){
     ESP_LOGI(tag_BLE, "Resetting state; reason=%d\n", reason);
 }
 
-//start nimble in a task
 void bleHostTask(void *param)
 {
     ESP_LOGI(tag_BLE, "BLE Host Task Started");
-    /* This function will return only when nimble_port_stop() is executed */
+    
+    //This function will return only when nimble_port_stop() is executed
     nimble_port_run();
 
     nimble_port_freertos_deinit();

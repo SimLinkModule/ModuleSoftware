@@ -28,7 +28,7 @@ void app_main(void)
     ssd1306_setString("Welcome",25,9);
     ssd1306_display();
 
-    //display screen 2 seconds before starting up ble and crsf read
+    //display welcome 2 seconds before starting up ble and crsf read
     vTaskDelay(2000 / portTICK_PERIOD_MS);
     ssd1306_clear();
     ssd1306_display();
@@ -45,19 +45,19 @@ void app_main(void)
     //setup buttons
     initButtons();
 
-    /*##########################################################
-    ############################################################
-    # nicht verwendet, da keine Batteriespannung vorhanden ist #
-    ############################################################
-    ############################################################
+    /*############################################################
+    ##############################################################
+    # not used, because no pin with battery voltage is available #
+    ##############################################################
+    ##############################################################
     //timer to read battery percentage via ADC
     initBatteryRead();
-    //wert jede sekunde auslesen --> aus 10 messungen wird der mittelwert gebildet --> vermindern von rauschen
+    //read ADC value every second --> the average of 10 measurements is used --> reduces noice
     batteryTimerHandle = xTimerCreate("battery_timer", pdMS_TO_TICKS(1000), pdTRUE, (void *)0, battery_Timer_Event);
 
     //start the timer
     if (xTimerStart(batteryTimerHandle, 1000 / portTICK_PERIOD_MS ) != pdPASS) {
-        //display a default value if the timer cannot be started
+        //display a default value if the timer cann't be started
         batteryPercentage = 7;
     }
     */

@@ -1,7 +1,5 @@
 # Code
 ## Aufgaben
-- [ ] Main kommentieren
-- [ ] BLE Component kommentieren
 - [ ] BLE-Debugging anpassen
 - [ ] Pinout anpassen
 - [ ] TODO in Platine und Gehäuse auslagern
