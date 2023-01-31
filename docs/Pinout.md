@@ -11,7 +11,7 @@
 
 **Note:**
 
-- If the ADC is to be used to determine the voltage. (If there is a pin for the battery voltage) then a voltage divider must be used, which regulates the maximum voltage of the battery down to 3.3V. Also the formula in the battery component has to be adjusted. In the test setup R1 was 650 Ohm and R2 2000 Ohm.
+- If the ADC should be used to determine the voltage, (If there is a pin for the battery voltage) then a voltage divider must be used, which regulates the maximum voltage of the battery down to 3.3V. Also the formula in the battery component has to be adjusted. In the test setup R1 was 650 Ohm and R2 2000 Ohm.
 - The buttons are connected to GND. An internal pullup resistor in the ESP pulls the pin to 3.3V in idle state.
 
 # OLED-Display
