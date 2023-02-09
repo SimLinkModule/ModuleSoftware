@@ -8,9 +8,9 @@ This is the software for a BLE game controller expansion module for the TBS Tang
 - [x] Pop! OS 22.04 LTS (tested with Velocidrone)
 
 ## Links to the other parts of the project
-- [ ] [PCB](https://github.com/SimLinkModule/PCB)
-- [ ] [Shell](https://github.com/SimLinkModule/Shell)
-- [ ] [Doc](https://github.com/SimLinkModule/documentation)
+- [PCB](https://github.com/SimLinkModule/PCB)
+- [Shell](https://github.com/SimLinkModule/Shell)
+- [Doc](https://github.com/SimLinkModule/documentation)
 
 ## Known bugs / issues
 - [ ] Display shows wrong output for some GAP events
