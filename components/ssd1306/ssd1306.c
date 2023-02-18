@@ -87,10 +87,10 @@ void ssd1306_init(){
 	i2c_master_write_byte(cmd, 0x00, true);
     //set the RAM display start line to 0
     i2c_master_write_byte(cmd, SSD1306_CMD_SET_DISPLAY_START_LINE, true);
-    //mirror the x-axis. alternative = SSD1306_CMD_SET_SEGMENT_REMAP_0
-    i2c_master_write_byte(cmd, SSD1306_CMD_SET_SEGMENT_REMAP_1, true);  
-    //mirror the y-axis. alternative = SSD1306_CMD_SET_COM_SCAN_MODE_0
-    i2c_master_write_byte(cmd, SSD1306_CMD_SET_COM_SCAN_MODE_1, true);	
+    //mirror the x-axis. alternative = SSD1306_CMD_SET_SEGMENT_REMAP_1
+    i2c_master_write_byte(cmd, SSD1306_CMD_SET_SEGMENT_REMAP_0, true);  
+    //mirror the y-axis. alternative = SSD1306_CMD_SET_COM_SCAN_MODE_1
+    i2c_master_write_byte(cmd, SSD1306_CMD_SET_COM_SCAN_MODE_0, true);	
     //set the COM PinMap to fit 32 lines
     i2c_master_write_byte(cmd, SSD1306_CMD_SET_COM_PIN_MAP, true);
     i2c_master_write_byte(cmd, 0x02, true);

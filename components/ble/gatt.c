@@ -81,8 +81,8 @@ uint16_t battery_status_handle;
 //infos about the manufacturer, model, firmware, ... for the device information service 
 static const char *manuf_name = "SimLinkModule";
 static const char *model_num = "P-1.0";
-static const char *firmware_rev = "1.0";
-static const char *software_rev = "1.0";
+static const char *firmware_rev = "1.01";
+static const char *software_rev = "1.01";
 
 static const uint8_t hidInfo[HID_INFORMATION_LEN] = {
     0x01, 0x01,                                       // bcdHID (USB HID version) --> Version 1.01
