@@ -7,7 +7,7 @@
 - In the developer options "Bluetooth HCI snoop protocol can be enabled" and the data can be logged and later inspected using Wirekshark.
 
 # Linux
-- Tools: hcitool, gatttool, bluetoothctl, hidraw-dump, Bluepy
+- Tools: hcitool, gatttool, bluetoothctl, hidraw-dump, Bluepy, libimobiledevice
 
 ## General
 Edit `/lib/systemd/system/bluetooth.service` and change to:
@@ -99,5 +99,23 @@ Use the [website](https://eleccelerator.com/usbdescreqparser/).
 #### List of services
 `svcs`
 
+## libimobiledevice
+This can be used to read out the packets on an iDevice.
+
+### Setup
+1. A profile must be installed on the iDevice. Apparently it expires after 4 days. [iDevice-Profile](https://www.bluetooth.com/blog/a-new-way-to-debug-iosbluetooth-applications/)
+2. Install [libimobiledevice](https://github.com/libimobiledevice/libimobiledevice). Please note the following to ensure that it also works with the latest iOS version. [1](https://github.com/libimobiledevice/libimobiledevice/issues/1282) [2](https://github.com/libimobiledevice/libimobiledevice/issues/1002)
+3. Install Wireshark
+4. Passing the live data to wireshark with a named pipe:  `mkfifo /tmp/sharkfin`
+5. Start Wireshark: `wireshark -k -i /tmp/sharkfin`
+6. Start idevicebtlogger: `idevicebtlogger -f pcap /tmp/sharkfin`
+
+Possible Wireshark filter: `bluetooth.src == <MAC des BLE-Geräts> || bluetooth.dst == <MAC des BLE-Geräts>`
+
+If it doesn't work, either the computer must be restarted after the installation or usbmuxd must be started.
+
 ## Note:
 - Debugging the XBox controller only worked if it was not connected in the Bluetooth settings and if the XBox controller was only switched to connecting mode when gatttools was open and `connect` was called. The option random shouldn't be activated in the gatttool.
+
+## Mac
+On Mac, Packetlogger for Xcode can be used to record Bluetooth packets from an iDevice.

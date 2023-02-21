@@ -15,7 +15,6 @@ This is the software for a BLE game controller expansion module for the TBS Tang
 ## Known bugs / issues
 - [ ] Display shows wrong output for some GAP events
 - [ ] iOS not working. Connection can be established and automatic reconnection also works. RPA works. HID data is also subscribed and sent, but not processed by iOS.
-    - Probably needs a closer look with XCode and Packetlogger (Mac required :thinking: )
     - Or a ticket to the Apple Developer Technical Support Team (Apple Developer account required :thinking: )
 - [ ] Pop! OS kernel doesn't recognize HID version when connecting via BLE (always version 0.0) &rarr; Linux Kernel output is correct with an XBox controller
 - [ ] For an XBox controller, the client configuration descriptor of the report is set to 01 00 (by default). Here the default is 00 00 &rarr; Should be according to the specification.
